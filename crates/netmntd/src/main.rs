@@ -1,17 +1,41 @@
 //! netmntd — privileged system daemon.
 //!
 //! Owns `org.netmnt` on the system bus and performs the actual mounting.
-//! Every method is meant to be guarded by polkit (see `data/polkit/`); the
-//! authorization wiring is a TODO tracked in docs/Roadmap.md.
+//! Every mutating method is guarded by polkit (see `data/polkit/`) before any
+//! privileged action runs.
 
 mod exec;
+mod polkit;
 
 use netmnt_common::{MountRequest, MountResult, BUS_NAME, OBJECT_PATH};
 use zbus::interface;
+use zbus::message::Header;
 
 /// Map an internal error into a D-Bus error returned to the client.
 fn to_fdo(err: anyhow::Error) -> zbus::fdo::Error {
     zbus::fdo::Error::Failed(err.to_string())
+}
+
+/// Ask polkit whether the caller of this message may perform `action`.
+async fn authorize(
+    conn: &zbus::Connection,
+    header: &Header<'_>,
+    action: &str,
+) -> zbus::fdo::Result<()> {
+    let sender = header
+        .sender()
+        .ok_or_else(|| zbus::fdo::Error::AccessDenied("missing caller identity".into()))?;
+
+    let authorized = polkit::is_authorized(conn, sender.as_str(), action)
+        .await
+        .map_err(to_fdo)?;
+
+    if !authorized {
+        return Err(zbus::fdo::Error::AccessDenied(format!(
+            "polkit denied action {action}"
+        )));
+    }
+    Ok(())
 }
 
 /// The manager object served on the system bus.
@@ -20,18 +44,35 @@ struct Manager;
 #[interface(name = "org.netmnt.Manager1")]
 impl Manager {
     /// Mount the share described by `request` and return the resulting mount point.
-    ///
-    /// TODO (Phase 2): guard with polkit using the caller's uid/pid.
-    async fn mount(&self, request: MountRequest) -> zbus::fdo::Result<MountResult> {
+    async fn mount(
+        &self,
+        request: MountRequest,
+        #[zbus(header)] header: Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+    ) -> zbus::fdo::Result<MountResult> {
         tracing::info!(url = %request.url, mount_point = %request.mount_point, "mount requested");
+        let action = if request.persistent {
+            polkit::ACTION_MOUNT_PERSISTENT
+        } else {
+            polkit::ACTION_MOUNT
+        };
+        authorize(conn, &header, action).await?;
+
         let result = exec::perform_mount(&request).await.map_err(to_fdo)?;
         tracing::info!(mount_point = %result.mount_point, "mounted");
         Ok(result)
     }
 
     /// Unmount the share currently mounted at `mount_point`.
-    async fn unmount(&self, mount_point: String) -> zbus::fdo::Result<()> {
+    async fn unmount(
+        &self,
+        mount_point: String,
+        #[zbus(header)] header: Header<'_>,
+        #[zbus(connection)] conn: &zbus::Connection,
+    ) -> zbus::fdo::Result<()> {
         tracing::info!(%mount_point, "unmount requested");
+        authorize(conn, &header, polkit::ACTION_UNMOUNT).await?;
+
         exec::perform_unmount(&mount_point).await.map_err(to_fdo)?;
         tracing::info!(%mount_point, "unmounted");
         Ok(())

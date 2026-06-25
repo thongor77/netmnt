@@ -16,7 +16,8 @@ But : lever les risques avant de figer l'implémentation (cf. Architecture.md).
       `netmnt-common::smb`, testé : 7 tests unitaires)
 - [x] Prototype : montage SMB réel via `mount.cifs` depuis le daemon, session
       (module `netmntd::exec`) — mot de passe hors argv via env `PASSWD`
-- [ ] Prototype : récupération du sujet polkit (uid/pid) + `CheckAuthorization`
+- [x] Prototype : garde polkit via `CheckAuthorization` (sujet `system-bus-name`,
+      module `netmntd::polkit`) — câblé sur `Mount`/`Unmount`
 - [ ] Prototype : lecture d'un secret KWallet via Secret Service D-Bus
 - [ ] Prototype : génération + `enable --now` d'une unit systemd `.mount`
 
@@ -25,7 +26,7 @@ But : lever les risques avant de figer l'implémentation (cf. Architecture.md).
 - [x] Implémenter `Mount` (session, guest) bout en bout : CLI → D-Bus → daemon
 - [x] Convention du point de montage (`~/mnt/<share>`, confiné à la base)
 - [x] Implémenter `Unmount`
-- [ ] Garde polkit sur chaque méthode
+- [x] Garde polkit sur chaque méthode mutante
 - [ ] Test manuel sur un vrai partage (nécessite root + serveur SMB)
 - [ ] `Mount as…` avec mot de passe (prompt sécurisé, pas encore câblé)
 

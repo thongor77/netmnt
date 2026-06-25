@@ -61,4 +61,5 @@ alternatives existantes écartées — Smb4K, kio-fuse).
 
 1. Récupération du mot de passe depuis KWallet côté daemon (D-Bus Secret Service).
 2. Génération + activation d'une unit systemd `.mount` à chaud sans casser l'idempotence.
-3. Récupération fiable du polkit subject (uid/pid appelant) via zbus.
+3. ~~Récupération fiable du polkit subject (uid/pid appelant) via zbus.~~ **Résolu** :
+   sujet `system-bus-name` + `CheckAuthorization` (module `netmntd::polkit`).
