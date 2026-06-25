@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=org.netmnt
+Exec=/usr/bin/netmntd
+User=root
+SystemdService=netmntd.service

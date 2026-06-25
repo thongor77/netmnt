@@ -27,7 +27,9 @@ But : lever les risques avant de figer l'implémentation (cf. Architecture.md).
 - [x] Convention du point de montage (`~/mnt/<share>`, confiné à la base)
 - [x] Implémenter `Unmount`
 - [x] Garde polkit sur chaque méthode mutante
-- [ ] Test manuel sur un vrai partage (nécessite root + serveur SMB)
+- [x] Outillage d'install pour le test réel (`Makefile` : build/install/reload/
+      uninstall ; fichier d'activation D-Bus ; unit corrigée `MountFlags=shared`)
+- [ ] Test manuel sur un vrai partage (à exécuter par l'utilisateur : root + NAS)
 - [ ] `Mount as…` avec mot de passe (prompt sécurisé, pas encore câblé)
 
 ## Phase 3 — Credentials & persistance

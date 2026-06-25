@@ -51,8 +51,38 @@ See [`docs/Roadmap.md`](docs/Roadmap.md).
 ## Build
 
 ```sh
-cargo build
+cargo build            # debug
+make build             # release binaries used by `make install`
 ```
+
+## Install & try it (real mount)
+
+> Needs a working SMB share. Authenticated shares need the password wiring
+> (Phase 3); for a first test use a **guest-readable** share.
+
+```sh
+make build             # as your user
+sudo make install      # binaries + D-Bus/polkit/systemd/servicemenu files
+sudo make reload       # refresh systemd + D-Bus
+
+# CLI test (the daemon is D-Bus activated on first call):
+netmnt mount smb://lab1.local/public
+#   → polkit prompts for admin authentication, then:
+ls ~/mnt/public
+netmnt unmount ~/mnt/public
+```
+
+To watch the daemon logs during a test, run it in the foreground instead of
+relying on activation:
+
+```sh
+sudo /usr/bin/netmntd        # terminal A (logs)
+netmnt mount smb://lab1.local/public   # terminal B
+```
+
+In Dolphin: right-click an `smb://` location → **netmnt → Mount**.
+
+Uninstall: `sudo make uninstall`.
 
 ## Existing alternatives
 

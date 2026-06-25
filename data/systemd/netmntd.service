@@ -1,7 +1,6 @@
 [Unit]
 Description=netmnt network mount daemon
-Documentation=https://github.com/
-# D-Bus activated; started on first call to org.netmnt.
+Documentation=https://github.com/thongor77/netmnt
 After=network-online.target
 Wants=network-online.target
 
@@ -9,13 +8,13 @@ Wants=network-online.target
 Type=dbus
 BusName=org.netmnt
 ExecStart=/usr/bin/netmntd
-# Hardening (mount needs CAP_SYS_ADMIN, so we cannot drop everything).
-CapabilityBoundingSet=CAP_SYS_ADMIN CAP_DAC_OVERRIDE CAP_SETUID CAP_SETGID
-ProtectSystem=strict
-ProtectHome=read-only
-ReadWritePaths=/etc/systemd/system /run /home
-NoNewPrivileges=false
 Restart=on-failure
+
+# IMPORTANT: the daemon performs mounts on behalf of the host. With a private
+# mount namespace (the default once any Protect*/sandboxing option is set) those
+# mounts would NOT propagate to user sessions. MountFlags=shared keeps mount
+# propagation working. Any future hardening must preserve this.
+MountFlags=shared
 
 [Install]
 WantedBy=multi-user.target
