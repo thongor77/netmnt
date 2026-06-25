@@ -31,11 +31,14 @@ But : lever les risques avant de figer l'implémentation (cf. Architecture.md).
       uninstall ; fichier d'activation D-Bus ; unit corrigée `MountFlags=shared`)
 - [x] Test manuel sur un vrai partage **réussi** (25/06/2026,
       `smb://lab1.local/public` invité : mount + unmount OK, polkit + mount.cifs validés)
-- [ ] `Mount as…` avec mot de passe (prompt sécurisé, pas encore câblé)
+- [x] `Mount as…` avec mot de passe (prompt sécurisé, câblé — voir Phase 3)
 
 ## Phase 3 — Credentials & persistance
 
-- [ ] `Mount as…` : prompt username/password (KDialog) + stockage KWallet
+- [x] `Mount as…` : prompt username/password (kdialog ou tty) + lecture/écriture
+      KWallet (`netmnt mount --ask`) ; mot de passe hors argv, stocké seulement
+      après un montage réussi
+- [ ] Test réel sur un partage authentifié (`smb://lab1.local/Wiki`)
 - [ ] `Mount (persistent)` : unit systemd `.mount` + credentials persistés
 - [ ] Démontage d'un mount persistant (disable de l'unit)
 

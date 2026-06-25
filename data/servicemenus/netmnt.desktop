@@ -15,8 +15,7 @@ Exec=netmnt mount %u
 [Desktop Action netmntMountAs]
 Name=Mount as…
 Icon=drive-network
-# A small KDialog/prompt for the username is wired by the client (TODO).
-Exec=netmnt mount --username "" %u
+Exec=netmnt mount --ask %u
 
 [Desktop Action netmntMountPersistent]
 Name=Mount (persistent)

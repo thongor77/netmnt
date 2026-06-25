@@ -5,6 +5,7 @@
 //! the `PASSWD` environment variable that `mount.cifs` reads.
 
 use std::path::Path;
+use std::process::Stdio;
 
 use netmnt_common::{smb, MountRequest, MountResult};
 use tokio::process::Command;
@@ -39,10 +40,14 @@ pub async fn perform_mount(request: &MountRequest) -> anyhow::Result<MountResult
     cmd.arg(&source)
         .arg(mount_point)
         .arg("-o")
-        .arg(options.join(","));
+        .arg(options.join(","))
+        // Never let mount.cifs block on an interactive password prompt: the
+        // daemon has no terminal, so a missing password must fail, not hang.
+        .stdin(Stdio::null());
 
-    // Pass the password out-of-band so it never shows up in `ps`/argv.
-    if !request.username.is_empty() && !request.password.is_empty() {
+    // Pass the password out-of-band so it never shows up in `ps`/argv. Always
+    // set PASSWD when a username is given (even if empty) to suppress prompting.
+    if !request.username.is_empty() {
         cmd.env("PASSWD", &request.password);
     }
 

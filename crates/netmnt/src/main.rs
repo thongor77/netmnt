@@ -3,6 +3,8 @@
 //! This is the binary the KDE service menu calls. It translates a user action
 //! (mount / mount-as / mount-persistent) into a D-Bus call to `netmntd`.
 
+mod creds;
+
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
@@ -26,9 +28,12 @@ enum Command {
         /// Persist the mount across reboots (systemd .mount unit).
         #[arg(long)]
         persistent: bool,
-        /// Prompt for / pass an explicit username (mount-as).
+        /// Use an explicit username (implies credential prompt for the password).
         #[arg(long)]
         username: Option<String>,
+        /// "Mount as": ask for credentials (or reuse a stored KWallet entry).
+        #[arg(long)]
+        ask: bool,
     },
     /// Unmount a previously mounted share by its mount point.
     Unmount {
@@ -61,6 +66,7 @@ async fn main() -> anyhow::Result<()> {
             url,
             persistent,
             username,
+            ask,
         } => {
             // The client runs as the user, so it resolves a default mount point
             // under $HOME/mnt and hands the absolute path to the daemon.
@@ -71,16 +77,36 @@ async fn main() -> anyhow::Result<()> {
                 .to_string_lossy()
                 .into_owned();
 
+            // Gather credentials only for "mount as" (--ask) or an explicit user;
+            // a plain mount stays a guest mount.
+            let mut to_store = None;
+            let (username, password) = if ask || username.is_some() {
+                let wallet_key = smb::unc_path(&target);
+                let creds = creds::acquire(&url, &wallet_key, &username.unwrap_or_default())?;
+                if creds.freshly_entered && creds.remember && !creds.password.is_empty() {
+                    to_store = Some((wallet_key, creds.username.clone(), creds.password.clone()));
+                }
+                (creds.username, creds.password)
+            } else {
+                (String::new(), String::new())
+            };
+
             let request = MountRequest {
                 url,
                 mount_point,
-                username: username.unwrap_or_default(),
-                // TODO: read the password securely (KWallet / KDialog prompt), never argv.
-                password: String::new(),
+                username,
+                password,
                 persistent,
             };
             let result = manager.mount(request).await?;
             println!("mounted at {}", result.mount_point);
+
+            // Persist credentials only once the mount actually succeeded.
+            if let Some((key, user, pass)) = to_store {
+                if let Err(e) = creds::kwallet_write(&key, &user, &pass) {
+                    eprintln!("note: could not save credentials to KWallet: {e}");
+                }
+            }
         }
         Command::Unmount { mount_point } => {
             manager.unmount(mount_point).await?;

@@ -70,6 +70,10 @@ netmnt mount smb://lab1.local/public
 #   → polkit prompts for admin authentication, then:
 ls ~/mnt/public
 netmnt unmount ~/mnt/public
+
+# Authenticated share ("mount as"): prompts for credentials (kdialog or tty),
+# can store them in KWallet, and reuses them next time.
+netmnt mount --ask smb://lab1.local/wiki
 ```
 
 To watch the daemon logs during a test, run it in the foreground instead of
