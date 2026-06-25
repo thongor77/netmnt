@@ -25,6 +25,16 @@ pub async fn perform_mount(request: &MountRequest) -> anyhow::Result<MountResult
     }
     let mount_point = Path::new(&request.mount_point);
 
+    // Idempotent: if something is already mounted here, treat it as success
+    // instead of letting mount.cifs fail with a cryptic EBUSY.
+    if is_mountpoint(mount_point).await {
+        tracing::info!(mount_point = %mount_point.display(), "already mounted");
+        return Ok(MountResult {
+            mount_point: mount_point.to_string_lossy().into_owned(),
+            persisted: false,
+        });
+    }
+
     tokio::fs::create_dir_all(mount_point).await.map_err(|e| {
         anyhow::anyhow!("cannot create mount point {}: {e}", mount_point.display())
     })?;
@@ -63,8 +73,22 @@ pub async fn perform_mount(request: &MountRequest) -> anyhow::Result<MountResult
     })
 }
 
+/// Return true if `path` is currently a mount point.
+async fn is_mountpoint(path: &Path) -> bool {
+    Command::new("mountpoint")
+        .arg("-q")
+        .arg(path)
+        .status()
+        .await
+        .map(|s| s.success())
+        .unwrap_or(false)
+}
+
 /// Unmount the share currently mounted at `mount_point`.
 pub async fn perform_unmount(mount_point: &str) -> anyhow::Result<()> {
+    if !is_mountpoint(Path::new(mount_point)).await {
+        anyhow::bail!("{mount_point} is not mounted");
+    }
     let output = Command::new("umount").arg(mount_point).output().await?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
