@@ -17,4 +17,5 @@ tokio = { workspace = true }
 serde = { workspace = true }
 anyhow = { workspace = true }
 clap = { workspace = true }
+libc = { workspace = true }
 rpassword = { workspace = true }

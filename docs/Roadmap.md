@@ -47,6 +47,8 @@ But : lever les risques avant de figer l'implémentation (cf. Architecture.md).
 
 ## Phase 4 — Packaging & UX
 
+- [x] Ownership : le client envoie son uid/gid, passés en `uid=`/`gid=` à
+      `mount.cifs` (session + persistant) ⇒ fichiers possédés par l'utilisateur
 - [x] `Makefile` d'installation (binaires + dbus/polkit/systemd/servicemenu + unmount)
 - [ ] Entrée Dolphin **Unmount** ajoutée (à affiner : visible sur tout dossier local)
 - [ ] Icônes et libellés du servicemenu finalisés

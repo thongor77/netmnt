@@ -65,24 +65,6 @@ fn normalize_local_path(input: &str) -> String {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::normalize_local_path;
-
-    #[test]
-    fn normalizes_bare_path() {
-        assert_eq!(normalize_local_path("/home/u/mnt/Wiki"), "/home/u/mnt/Wiki");
-    }
-
-    #[test]
-    fn strips_file_scheme_and_decodes() {
-        assert_eq!(
-            normalize_local_path("file:///home/u/mnt/TV%20Shows/"),
-            "/home/u/mnt/TV Shows"
-        );
-    }
-}
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Silence unused-constant warnings until the proxy attributes reference them.
@@ -122,12 +104,17 @@ async fn main() -> anyhow::Result<()> {
                 (String::new(), String::new())
             };
 
+            // The client runs as the user, so its own uid/gid are the desired
+            // owner of the mounted files.
             let request = MountRequest {
                 url,
                 mount_point,
                 username,
                 password,
                 persistent,
+                // SAFETY: getuid/getgid always succeed and have no preconditions.
+                uid: unsafe { libc::getuid() },
+                gid: unsafe { libc::getgid() },
             };
             let result = manager.mount(request).await?;
             println!("mounted at {}", result.mount_point);
@@ -147,4 +134,22 @@ async fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::normalize_local_path;
+
+    #[test]
+    fn normalizes_bare_path() {
+        assert_eq!(normalize_local_path("/home/u/mnt/Wiki"), "/home/u/mnt/Wiki");
+    }
+
+    #[test]
+    fn strips_file_scheme_and_decodes() {
+        assert_eq!(
+            normalize_local_path("file:///home/u/mnt/TV%20Shows/"),
+            "/home/u/mnt/TV Shows"
+        );
+    }
 }

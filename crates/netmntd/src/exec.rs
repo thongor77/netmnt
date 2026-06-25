@@ -35,7 +35,11 @@ pub async fn perform_mount(request: &MountRequest) -> anyhow::Result<MountResult
         anyhow::anyhow!("cannot create mount point {}: {e}", mount_point.display())
     })?;
 
-    let mut options = vec!["rw".to_string()];
+    let mut options = vec![
+        "rw".to_string(),
+        format!("uid={}", request.uid),
+        format!("gid={}", request.gid),
+    ];
     if request.username.is_empty() {
         options.push("guest".to_string());
     } else {
@@ -78,7 +82,12 @@ pub async fn perform_persistent_mount(request: &MountRequest) -> anyhow::Result<
 
     // Credentials go in a root-only file referenced by the unit (never in the
     // world-readable unit itself).
-    let mut options = vec!["rw".to_string(), "_netdev".to_string()];
+    let mut options = vec![
+        "rw".to_string(),
+        "_netdev".to_string(),
+        format!("uid={}", request.uid),
+        format!("gid={}", request.gid),
+    ];
     if request.username.is_empty() {
         options.push("guest".to_string());
     } else {

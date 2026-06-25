@@ -33,6 +33,10 @@ pub struct MountRequest {
     pub password: String,
     /// When true, register a persistent systemd `.mount` unit (survives reboot).
     pub persistent: bool,
+    /// Owner uid for the mounted files (the calling user), passed as `uid=`.
+    pub uid: u32,
+    /// Owner gid for the mounted files (the calling user), passed as `gid=`.
+    pub gid: u32,
 }
 
 /// Result returned to the client after a successful mount.
