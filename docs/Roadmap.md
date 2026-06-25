@@ -29,7 +29,8 @@ But : lever les risques avant de figer l'implémentation (cf. Architecture.md).
 - [x] Garde polkit sur chaque méthode mutante
 - [x] Outillage d'install pour le test réel (`Makefile` : build/install/reload/
       uninstall ; fichier d'activation D-Bus ; unit corrigée `MountFlags=shared`)
-- [ ] Test manuel sur un vrai partage (à exécuter par l'utilisateur : root + NAS)
+- [x] Test manuel sur un vrai partage **réussi** (25/06/2026,
+      `smb://lab1.local/public` invité : mount + unmount OK, polkit + mount.cifs validés)
 - [ ] `Mount as…` avec mot de passe (prompt sécurisé, pas encore câblé)
 
 ## Phase 3 — Credentials & persistance
