@@ -10,8 +10,9 @@ members = [
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-authors = ["luust"]
-repository = ""
+authors = ["thongor77"]
+repository = "https://github.com/thongor77/netmnt"
+homepage = "https://github.com/thongor77/netmnt"
 
 [workspace.dependencies]
 netmnt-common = { path = "crates/netmnt-common" }
