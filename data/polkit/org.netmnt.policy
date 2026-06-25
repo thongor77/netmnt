@@ -11,8 +11,9 @@
     <defaults>
       <allow_any>auth_admin</allow_any>
       <allow_inactive>auth_admin</allow_inactive>
-      <!-- active local user may mount after a one-time authentication that is kept for the session -->
-      <allow_active>auth_admin_keep</allow_active>
+      <!-- the active local user mounts session shares without a prompt;
+           persistent mounts (org.netmnt.mount-persistent) still need admin auth -->
+      <allow_active>yes</allow_active>
     </defaults>
   </action>
 
