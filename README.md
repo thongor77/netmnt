@@ -26,6 +26,8 @@ netmnt adds three actions to the file manager context menu:
 - **Mount as…** — same, with explicit credentials.
 - **Mount (persistent)** — register a systemd `.mount` unit so it survives reboot.
 
+![netmnt context menu in Dolphin](Screenshot/menu.png)
+
 ## Stack
 
 - **Rust** (workspace, edition 2021)
