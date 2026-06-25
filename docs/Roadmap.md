@@ -39,15 +39,15 @@ But : lever les risques avant de figer l'implémentation (cf. Architecture.md).
       KWallet (`netmnt mount --ask`) ; mot de passe hors argv, stocké seulement
       après un montage réussi
 - [x] Test réel sur un partage authentifié (`smb://lab1.local/Wiki`) **réussi**
-      (25/06/2026, kdialog + KWallet, `username=luust`, ownership `luust:luust`,
-      write OK, mot de passe hors argv)
+      (25/06/2026, kdialog + KWallet, identifiant réel, ownership = utilisateur
+      appelant, write OK, mot de passe hors argv)
 - [x] `Mount (persistent)` : unit systemd `.mount` générée + `enable --now` ;
       credentials dans un fichier root-only `/etc/netmnt/*.cred` (jamais dans l'unit)
 - [x] Démontage d'un mount persistant : `unmount` détecte l'unit, fait
       `disable --now` + supprime unit et cred (sinon remontage au boot)
-- [x] Test réel : persistant **survit au reboot** (25/06/2026,
-      `home-luust-mnt-Movies.mount` enabled + remonté au boot ; ownership
-      `luust:luust`, write OK) ; partage authentifié validé (cf. ligne ci-dessus).
+- [x] Test réel : persistant **survit au reboot** (25/06/2026, unit
+      `home-<user>-mnt-Movies.mount` enabled + remonté au boot ; ownership =
+      utilisateur appelant, write OK) ; partage authentifié validé (cf. ci-dessus).
 - [x] Entrée Dolphin **Unmount** validée en réel (25/06/2026, depuis la vue
       fichiers sur un mount authentifié). Limite documentée : indisponible depuis
       le panneau Emplacements (menu non extensible). Le daemon nettoie aussi le

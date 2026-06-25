@@ -32,7 +32,8 @@ privilégié.
 - **Unmount** : par point de montage ; démantèle l'unit systemd si persistant.
   Entrée Dolphin **netmnt → Unmount**. Accepte chemin nu ou URL `file://`.
 - **Ownership** : montages possédés par l'utilisateur (`uid=`/`gid=` envoyés par
-  le client). **Validé après reboot** : `luust:luust`, lecture/écriture OK.
+  le client). **Validé après reboot** : montage possédé par l'utilisateur appelant,
+  lecture/écriture OK.
 
 Build/clippy clean, ~13 tests unitaires. Détail et suite : `docs/Roadmap.md`.
 

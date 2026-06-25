@@ -181,7 +181,7 @@ async fn is_mountpoint(path: &Path) -> bool {
         .unwrap_or(false)
 }
 
-/// Compute the systemd unit name (`home-luust-mnt-isos.mount`) for a mount point.
+/// Compute the systemd unit name (`home-user-mnt-isos.mount`) for a mount point.
 async fn systemd_escape_mount(path: &Path) -> anyhow::Result<String> {
     let out = Command::new("systemd-escape")
         .arg("--path")
