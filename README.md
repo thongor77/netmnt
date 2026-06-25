@@ -1,4 +1,13 @@
-# netmnt
+# netmnt · v0.1.0
+
+[![Version](https://img.shields.io/badge/version-0.1.0-brightgreen.svg)](https://github.com/thongor77/netmnt/releases/latest)
+[![Rust](https://img.shields.io/badge/Rust-2021-orange.svg?logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Linux-informational.svg?logo=linux&logoColor=white)](#install--try-it-real-mount)
+[![Desktop](https://img.shields.io/badge/desktop-KDE%20%7C%20Dolphin-1d99f3.svg?logo=kde&logoColor=white)](#)
+[![Shares](https://img.shields.io/badge/shares-SMB%2FCIFS-purple.svg)](#)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://www.paypal.com/donate/?business=JFQGY7NU3ANCN&no_recurring=0&item_name=Every+donation%2C+no+matter+how+small%2C+helps+me+keep+this+project+alive.+Thank+you%21%0A&currency_code=EUR)
+[![Bitcoin](https://img.shields.io/badge/Donate-Bitcoin-orange.svg)](#support-the-project)
 
 Mount network shares (SMB/CIFS, and later NFS) from a single click in your file
 manager — and unmount them just as easily.
@@ -44,9 +53,12 @@ Full detail: [`docs/Architecture.md`](docs/Architecture.md).
 
 ## Status
 
-Early scaffold. The D-Bus contract, project layout and system-integration files
-(polkit/dbus/systemd/servicemenu) are in place; the daemon methods are stubs.
-See [`docs/Roadmap.md`](docs/Roadmap.md).
+**Working (v0.1.0)** — tested end to end against a real NAS, including across a
+reboot. Mount (guest), Mount as… (authenticated, via kdialog + KWallet, password
+kept out of argv), persistent mounts (systemd `.mount` units that survive reboot),
+and Unmount (which also tears down the unit and cleans up the empty mount-point
+directory) all work. Mounts are owned by the calling user. SMB/CIFS only for now;
+NFS and SSHFS are next. See [`docs/Roadmap.md`](docs/Roadmap.md).
 
 ## Build
 
@@ -57,8 +69,8 @@ make build             # release binaries used by `make install`
 
 ## Install & try it (real mount)
 
-> Needs a working SMB share. Authenticated shares need the password wiring
-> (Phase 3); for a first test use a **guest-readable** share.
+> Needs a working SMB share. For a first test use a **guest-readable** share;
+> authenticated shares work too via `--ask` (see below).
 
 ```sh
 make build             # as your user
@@ -66,14 +78,14 @@ sudo make install      # binaries + D-Bus/polkit/systemd/servicemenu files
 sudo make reload       # refresh systemd + D-Bus
 
 # CLI test (the daemon is D-Bus activated on first call):
-netmnt mount smb://lab1.local/public
+netmnt mount smb://nas.local/public
 #   → polkit prompts for admin authentication, then:
 ls ~/mnt/public
 netmnt unmount ~/mnt/public
 
 # Authenticated share ("mount as"): prompts for credentials (kdialog or tty),
 # can store them in KWallet, and reuses them next time.
-netmnt mount --ask smb://lab1.local/wiki
+netmnt mount --ask smb://nas.local/wiki
 ```
 
 To watch the daemon logs during a test, run it in the foreground instead of
@@ -81,7 +93,7 @@ relying on activation:
 
 ```sh
 sudo /usr/bin/netmntd        # terminal A (logs)
-netmnt mount smb://lab1.local/public   # terminal B
+netmnt mount smb://nas.local/public   # terminal B
 ```
 
 In Dolphin: right-click an `smb://` location → **netmnt → Mount**.
@@ -94,6 +106,13 @@ Evaluated before starting (see `docs/Decisions-Techniques.md`): **Smb4K**,
 **kio-fuse**, **gio mount / gvfs**, fstab/systemd. netmnt's niche is the
 right-click-to-stable-path workflow driven by a Rust service.
 
+## Support the project
+
+If netmnt is useful to you, consider supporting its development:
+
+- **PayPal** — [Donate via PayPal](https://www.paypal.com/donate/?business=JFQGY7NU3ANCN&no_recurring=0&item_name=Every+donation%2C+no+matter+how+small%2C+helps+me+keep+this+project+alive.+Thank+you%21%0A&currency_code=EUR)
+- **Bitcoin** — `bc1qspe0tky7552qas72wgn8w9dswr0dxlv24w39t6ztjqk3nz6kc5tqv753a4`
+
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
