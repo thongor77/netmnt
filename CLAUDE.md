@@ -21,9 +21,32 @@ privilégié.
 
 ## État actuel
 
-Squelette initial (25/06/2026). Contrat D-Bus, structure du workspace et fichiers
-d'intégration système (dbus/polkit/systemd/servicemenu) en place. Les méthodes du
-daemon sont des stubs. Détail : `docs/Roadmap.md`.
+**Fonctionnel (25/06/2026)** — testé en réel sur le NAS `lab1.local` :
+
+- **Mount** (session, invité) : OK, sans prompt (polkit `allow_active=yes`).
+- **Mount as…** (`--ask`) : prompt kdialog/tty + KWallet (lecture/écriture), mot
+  de passe hors argv. OK sur partage authentifié.
+- **Mount persistant** (`--persistent`) : génère une unit systemd `.mount` +
+  `enable --now` ; credentials dans `/etc/netmnt/*.cred` (root, 0600). Garde
+  l'auth admin polkit. **À valider après reboot.**
+- **Unmount** : par point de montage ; démantèle l'unit systemd si persistant.
+  Entrée Dolphin **netmnt → Unmount**. Accepte chemin nu ou URL `file://`.
+- **Ownership** : montages possédés par l'utilisateur (`uid=`/`gid=` envoyés par
+  le client). **À revérifier après reboot/remontage.**
+
+Build/clippy clean, ~13 tests unitaires. Détail et suite : `docs/Roadmap.md`.
+
+### Points ouverts / gotchas
+- **Ne pas utiliser le démontage natif de Dolphin** (éjecter/Solid) sur ces
+  montages : il lance `umount` en tant qu'utilisateur → « must be superuser ».
+  Utiliser l'entrée **netmnt → Unmount** (passe par le daemon root).
+- Le daemon **fait confiance** à l'uid/gid envoyé par le client (TODO : vérifier
+  via `GetConnectionUnixUser` du sujet D-Bus). Sans risque en usage perso.
+- Résolution mDNS `.local` lente côté kio-smb (Dolphin), **indépendant de netmnt**
+  (mount.cifs résout via le système). Workaround : `/etc/samba/smb.conf` avec
+  `name resolve order = host bcast`, ou utiliser l'IP.
+- Prochaines pistes : notifications succès/échec (retour visuel depuis Dolphin),
+  puis NFS/SSHFS.
 
 ## Lancer le projet
 
