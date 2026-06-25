@@ -28,6 +28,7 @@ install:
 	install -Dm644 data/polkit/org.netmnt.policy $(POLKIT)/org.netmnt.policy
 	install -Dm644 data/systemd/netmntd.service  $(SYSTEMD)/netmntd.service
 	install -Dm644 data/servicemenus/netmnt.desktop $(SERVICEMENU)/netmnt.desktop
+	install -Dm644 data/servicemenus/netmnt-unmount.desktop $(SERVICEMENU)/netmnt-unmount.desktop
 	@echo
 	@echo "Installed. Now run: sudo make reload"
 
@@ -44,5 +45,6 @@ uninstall:
 	rm -f $(POLKIT)/org.netmnt.policy
 	rm -f $(SYSTEMD)/netmntd.service
 	rm -f $(SERVICEMENU)/netmnt.desktop
+	rm -f $(SERVICEMENU)/netmnt-unmount.desktop
 	systemctl daemon-reload 2>/dev/null || true
 	@echo "Removed."

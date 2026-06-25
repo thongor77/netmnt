@@ -39,12 +39,16 @@ But : lever les risques avant de figer l'implémentation (cf. Architecture.md).
       KWallet (`netmnt mount --ask`) ; mot de passe hors argv, stocké seulement
       après un montage réussi
 - [ ] Test réel sur un partage authentifié (`smb://lab1.local/Wiki`)
-- [ ] `Mount (persistent)` : unit systemd `.mount` + credentials persistés
-- [ ] Démontage d'un mount persistant (disable de l'unit)
+- [x] `Mount (persistent)` : unit systemd `.mount` générée + `enable --now` ;
+      credentials dans un fichier root-only `/etc/netmnt/*.cred` (jamais dans l'unit)
+- [x] Démontage d'un mount persistant : `unmount` détecte l'unit, fait
+      `disable --now` + supprime unit et cred (sinon remontage au boot)
+- [ ] Test réel : persistant (reboot), partage authentifié, entrée Unmount Dolphin
 
 ## Phase 4 — Packaging & UX
 
-- [ ] Script/`Makefile` d'installation (placement dbus/polkit/systemd/servicemenu)
+- [x] `Makefile` d'installation (binaires + dbus/polkit/systemd/servicemenu + unmount)
+- [ ] Entrée Dolphin **Unmount** ajoutée (à affiner : visible sur tout dossier local)
 - [ ] Icônes et libellés du servicemenu finalisés
 - [ ] Notifications de succès/échec
 - [ ] Paquet Arch (`PKGBUILD`)

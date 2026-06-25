@@ -59,11 +59,16 @@ impl Manager {
         };
         authorize(conn, &header, action).await?;
 
-        let result = exec::perform_mount(&request).await.map_err(|e| {
+        let outcome = if request.persistent {
+            exec::perform_persistent_mount(&request).await
+        } else {
+            exec::perform_mount(&request).await
+        };
+        let result = outcome.map_err(|e| {
             tracing::warn!(url = %request.url, error = %e, "mount failed");
             to_fdo(e)
         })?;
-        tracing::info!(mount_point = %result.mount_point, "mounted");
+        tracing::info!(mount_point = %result.mount_point, persisted = result.persisted, "mounted");
         Ok(result)
     }
 
