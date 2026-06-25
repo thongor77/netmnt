@@ -12,7 +12,7 @@ optdepends=('kdialog: graphical credential prompt for "Mount as…"'
             'kwallet: store credentials for authenticated shares'
             'dolphin: file-manager integration (KDE service menus)')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('SKIP')  # run `updpkgsums` once the v0.1.0 tag is pushed to pin this
+sha256sums=('81b349670cc8e11bcebceafeeda0e142fa31c20bf83763ffa0b62b39540e1b34')
 
 prepare() {
     cd "$pkgname-$pkgver"
