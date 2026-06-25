@@ -38,12 +38,17 @@ But : lever les risques avant de figer l'implémentation (cf. Architecture.md).
 - [x] `Mount as…` : prompt username/password (kdialog ou tty) + lecture/écriture
       KWallet (`netmnt mount --ask`) ; mot de passe hors argv, stocké seulement
       après un montage réussi
-- [ ] Test réel sur un partage authentifié (`smb://lab1.local/Wiki`)
+- [x] Test réel sur un partage authentifié (`smb://lab1.local/Wiki`) **réussi**
+      (25/06/2026, kdialog + KWallet, `username=luust`, ownership `luust:luust`,
+      write OK, mot de passe hors argv)
 - [x] `Mount (persistent)` : unit systemd `.mount` générée + `enable --now` ;
       credentials dans un fichier root-only `/etc/netmnt/*.cred` (jamais dans l'unit)
 - [x] Démontage d'un mount persistant : `unmount` détecte l'unit, fait
       `disable --now` + supprime unit et cred (sinon remontage au boot)
-- [ ] Test réel : persistant (reboot), partage authentifié, entrée Unmount Dolphin
+- [x] Test réel : persistant **survit au reboot** (25/06/2026,
+      `home-luust-mnt-Movies.mount` enabled + remonté au boot ; ownership
+      `luust:luust`, write OK) ; partage authentifié validé (cf. ligne ci-dessus).
+      Reste : valider l'entrée Unmount depuis Dolphin sur un mount authentifié
 
 ## Phase 4 — Packaging & UX
 

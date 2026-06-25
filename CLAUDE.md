@@ -21,18 +21,18 @@ privilégié.
 
 ## État actuel
 
-**Fonctionnel (25/06/2026)** — testé en réel sur le NAS `lab1.local` :
+**Fonctionnel (25/06/2026)** — testé en réel sur le NAS `lab1.local`, validé après reboot :
 
 - **Mount** (session, invité) : OK, sans prompt (polkit `allow_active=yes`).
 - **Mount as…** (`--ask`) : prompt kdialog/tty + KWallet (lecture/écriture), mot
   de passe hors argv. OK sur partage authentifié.
 - **Mount persistant** (`--persistent`) : génère une unit systemd `.mount` +
   `enable --now` ; credentials dans `/etc/netmnt/*.cred` (root, 0600). Garde
-  l'auth admin polkit. **À valider après reboot.**
+  l'auth admin polkit. **Validé : survit au reboot** (remonté au boot par systemd).
 - **Unmount** : par point de montage ; démantèle l'unit systemd si persistant.
   Entrée Dolphin **netmnt → Unmount**. Accepte chemin nu ou URL `file://`.
 - **Ownership** : montages possédés par l'utilisateur (`uid=`/`gid=` envoyés par
-  le client). **À revérifier après reboot/remontage.**
+  le client). **Validé après reboot** : `luust:luust`, lecture/écriture OK.
 
 Build/clippy clean, ~13 tests unitaires. Détail et suite : `docs/Roadmap.md`.
 
