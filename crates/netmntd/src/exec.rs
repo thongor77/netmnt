@@ -122,6 +122,7 @@ pub async fn perform_unmount(mount_point: &str) -> anyhow::Result<()> {
             let _ = tokio::fs::remove_file(&unit_path).await;
             let _ = tokio::fs::remove_file(format!("{CRED_DIR}/{base}.cred")).await;
             run("systemctl", &["daemon-reload"]).await.ok();
+            remove_empty_mount_point(path).await;
             tracing::info!(%unit_name, "persistent mount removed");
             return Ok(());
         }
@@ -135,7 +136,24 @@ pub async fn perform_unmount(mount_point: &str) -> anyhow::Result<()> {
         let stderr = String::from_utf8_lossy(&output.stderr);
         anyhow::bail!("umount failed ({}): {}", output.status, stderr.trim());
     }
+    remove_empty_mount_point(path).await;
     Ok(())
+}
+
+/// Remove the mount-point directory netmnt created at mount time, now that the
+/// share is unmounted. Uses a non-recursive `remove_dir`, so it only succeeds on
+/// an empty directory — any leftover content (or a path that is still a mount)
+/// is left untouched. Failures are non-fatal: the unmount itself already worked.
+async fn remove_empty_mount_point(path: &Path) {
+    if let Err(e) = tokio::fs::remove_dir(path).await {
+        tracing::debug!(
+            mount_point = %path.display(),
+            error = %e,
+            "left mount-point directory in place"
+        );
+    } else {
+        tracing::info!(mount_point = %path.display(), "removed empty mount-point directory");
+    }
 }
 
 fn mount_point_of(request: &MountRequest) -> anyhow::Result<&Path> {

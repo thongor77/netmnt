@@ -37,9 +37,16 @@ privilégié.
 Build/clippy clean, ~13 tests unitaires. Détail et suite : `docs/Roadmap.md`.
 
 ### Points ouverts / gotchas
-- **Ne pas utiliser le démontage natif de Dolphin** (éjecter/Solid) sur ces
-  montages : il lance `umount` en tant qu'utilisateur → « must be superuser ».
-  Utiliser l'entrée **netmnt → Unmount** (passe par le daemon root).
+- **Démonter depuis la vue principale, pas depuis la sidebar.** L'entrée
+  **netmnt → Unmount** n'apparaît que sur le clic-droit d'un **dossier dans la
+  vue fichiers** (`~/mnt/<share>`) : c'est là que KDE applique les ServiceMenus.
+  Le **panneau Emplacements** (sidebar, section « Remote ») n'expose que l'« Unmount »
+  natif de Solid (umount en tant qu'utilisateur → « must be superuser »), et son
+  menu **n'est pas extensible** par ServiceMenu — impossible d'y ajouter netmnt.
+  Workaround : ne pas s'en servir (au besoin *Hide* l'entrée auto), démonter via
+  la vue fichiers. Validé en réel (25/06/2026) sur un mount authentifié.
+- Au démontage, le daemon supprime le **dossier de point de montage** désormais
+  vide (`remove_dir` non récursif : laissé en place s'il contient quoi que ce soit).
 - Le daemon **fait confiance** à l'uid/gid envoyé par le client (TODO : vérifier
   via `GetConnectionUnixUser` du sujet D-Bus). Sans risque en usage perso.
 - Résolution mDNS `.local` lente côté kio-smb (Dolphin), **indépendant de netmnt**

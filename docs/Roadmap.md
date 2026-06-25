@@ -48,14 +48,18 @@ But : lever les risques avant de figer l'implémentation (cf. Architecture.md).
 - [x] Test réel : persistant **survit au reboot** (25/06/2026,
       `home-luust-mnt-Movies.mount` enabled + remonté au boot ; ownership
       `luust:luust`, write OK) ; partage authentifié validé (cf. ligne ci-dessus).
-      Reste : valider l'entrée Unmount depuis Dolphin sur un mount authentifié
+- [x] Entrée Dolphin **Unmount** validée en réel (25/06/2026, depuis la vue
+      fichiers sur un mount authentifié). Limite documentée : indisponible depuis
+      le panneau Emplacements (menu non extensible). Le daemon nettoie aussi le
+      dossier de point de montage vide après démontage.
 
 ## Phase 4 — Packaging & UX
 
 - [x] Ownership : le client envoie son uid/gid, passés en `uid=`/`gid=` à
       `mount.cifs` (session + persistant) ⇒ fichiers possédés par l'utilisateur
 - [x] `Makefile` d'installation (binaires + dbus/polkit/systemd/servicemenu + unmount)
-- [ ] Entrée Dolphin **Unmount** ajoutée (à affiner : visible sur tout dossier local)
+- [x] Entrée Dolphin **Unmount** (vue fichiers ; no-op clair sur un dossier non
+      monté). Pas dispo dans la sidebar Emplacements (menu non extensible KDE).
 - [ ] Icônes et libellés du servicemenu finalisés
 - [ ] Notifications de succès/échec
 - [ ] Paquet Arch (`PKGBUILD`)
