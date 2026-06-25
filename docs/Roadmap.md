@@ -62,7 +62,8 @@ But : lever les risques avant de figer l'implémentation (cf. Architecture.md).
       monté). Pas dispo dans la sidebar Emplacements (menu non extensible KDE).
 - [ ] Icônes et libellés du servicemenu finalisés
 - [ ] Notifications de succès/échec
-- [ ] Paquet Arch (`PKGBUILD`)
+- [x] Paquet Arch (`PKGBUILD`) — **publié sur l'AUR** (`netmnt`, v0.1.0-1) ;
+      sources versionnées dans `packaging/aur/` (PKGBUILD + .SRCINFO + flux de release)
 
 ## Plus tard
 
