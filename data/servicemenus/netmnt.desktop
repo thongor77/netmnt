@@ -1,0 +1,24 @@
+[Desktop Entry]
+Type=Service
+# Show only on remote/network locations browsed in Dolphin.
+MimeType=inode/directory;
+X-KDE-Protocols=smb,nfs,ftp,sftp
+Actions=netmntMount;netmntMountAs;netmntMountPersistent;
+X-KDE-Priority=TopLevel
+X-KDE-Submenu=netmnt
+
+[Desktop Action netmntMount]
+Name=Mount
+Icon=drive-network
+Exec=netmnt mount %u
+
+[Desktop Action netmntMountAs]
+Name=Mount as…
+Icon=drive-network
+# A small KDialog/prompt for the username is wired by the client (TODO).
+Exec=netmnt mount --username "" %u
+
+[Desktop Action netmntMountPersistent]
+Name=Mount (persistent)
+Icon=drive-network
+Exec=netmnt mount --persistent %u

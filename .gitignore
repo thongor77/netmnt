@@ -1,0 +1,8 @@
+/target
+**/*.rs.bk
+Cargo.lock.orig
+
+# Secrets — never commit credentials
+.env
+*.cred
+*.credentials

@@ -1,0 +1,19 @@
+[package]
+name = "netmnt"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "netmnt CLI client (invoked by the Dolphin service menu)"
+
+[[bin]]
+name = "netmnt"
+path = "src/main.rs"
+
+[dependencies]
+netmnt-common = { workspace = true }
+zbus = { workspace = true }
+zvariant = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+anyhow = { workspace = true }
+clap = { workspace = true }

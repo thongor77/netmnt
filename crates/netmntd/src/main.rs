@@ -1,0 +1,60 @@
+//! netmntd — privileged system daemon.
+//!
+//! Owns `org.netmnt` on the system bus and performs the actual mounting.
+//! Every method is meant to be guarded by polkit (see `data/polkit/`); the
+//! authorization wiring is a TODO tracked in docs/Roadmap.md.
+
+use netmnt_common::{
+    MountRequest, MountResult, BUS_NAME, OBJECT_PATH,
+};
+use zbus::interface;
+
+/// The manager object served on the system bus.
+struct Manager;
+
+#[interface(name = "org.netmnt.Manager1")]
+impl Manager {
+    /// Mount the share described by `request` and return the resulting mount point.
+    ///
+    /// TODO: real implementation — resolve mount point, fetch credentials,
+    /// invoke `mount.cifs`, and (when persistent) generate a systemd `.mount`
+    /// unit. For now this is a stub that echoes the request.
+    async fn mount(&self, request: MountRequest) -> zbus::fdo::Result<MountResult> {
+        tracing::info!(url = %request.url, "mount requested (stub)");
+        Err(zbus::fdo::Error::NotSupported(
+            "mount() not implemented yet".to_string(),
+        ))
+    }
+
+    /// Unmount the share currently mounted at `mount_point`.
+    async fn unmount(&self, mount_point: String) -> zbus::fdo::Result<()> {
+        tracing::info!(%mount_point, "unmount requested (stub)");
+        Err(zbus::fdo::Error::NotSupported(
+            "unmount() not implemented yet".to_string(),
+        ))
+    }
+}
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "info".into()),
+        )
+        .init();
+
+    tracing::info!("starting netmntd, claiming {BUS_NAME} on the system bus");
+
+    let _conn = zbus::connection::Builder::system()?
+        .name(BUS_NAME)?
+        .serve_at(OBJECT_PATH, Manager)?
+        .build()
+        .await?;
+
+    tracing::info!("netmntd ready");
+
+    // Park forever; the connection runs in the background.
+    std::future::pending::<()>().await;
+    Ok(())
+}

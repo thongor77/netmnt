@@ -1,0 +1,21 @@
+[package]
+name = "netmntd"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "netmnt privileged mount daemon"
+
+[[bin]]
+name = "netmntd"
+path = "src/main.rs"
+
+[dependencies]
+netmnt-common = { workspace = true }
+zbus = { workspace = true }
+zvariant = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
