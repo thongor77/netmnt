@@ -52,6 +52,37 @@ trait Manager {
     async fn unmount(&self, mount_point: String) -> zbus::Result<()>;
 }
 
+/// Turn a file-manager argument (a bare path or a `file://` URL) into a plain
+/// local path the daemon can match against `/proc` mount points.
+fn normalize_local_path(input: &str) -> String {
+    let path = input.strip_prefix("file://").unwrap_or(input);
+    let decoded = smb::percent_decode(path);
+    let trimmed = decoded.trim_end_matches('/');
+    if trimmed.is_empty() {
+        "/".to_string()
+    } else {
+        trimmed.to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::normalize_local_path;
+
+    #[test]
+    fn normalizes_bare_path() {
+        assert_eq!(normalize_local_path("/home/u/mnt/Wiki"), "/home/u/mnt/Wiki");
+    }
+
+    #[test]
+    fn strips_file_scheme_and_decodes() {
+        assert_eq!(
+            normalize_local_path("file:///home/u/mnt/TV%20Shows/"),
+            "/home/u/mnt/TV Shows"
+        );
+    }
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Silence unused-constant warnings until the proxy attributes reference them.
@@ -109,7 +140,8 @@ async fn main() -> anyhow::Result<()> {
             }
         }
         Command::Unmount { mount_point } => {
-            manager.unmount(mount_point).await?;
+            // Dolphin's %f may hand us a file:// URL with percent-escapes.
+            manager.unmount(normalize_local_path(&mount_point)).await?;
             println!("unmounted");
         }
     }
