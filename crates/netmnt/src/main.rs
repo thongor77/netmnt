@@ -3,8 +3,10 @@
 //! This is the binary the KDE service menu calls. It translates a user action
 //! (mount / mount-as / mount-persistent) into a D-Bus call to `netmntd`.
 
+use std::path::PathBuf;
+
 use clap::{Parser, Subcommand};
-use netmnt_common::{MountRequest, MountResult, BUS_NAME, INTERFACE_NAME, OBJECT_PATH};
+use netmnt_common::{smb, MountRequest, MountResult, BUS_NAME, INTERFACE_NAME, OBJECT_PATH};
 use zbus::proxy;
 
 /// Mount network shares from a single click.
@@ -60,9 +62,18 @@ async fn main() -> anyhow::Result<()> {
             persistent,
             username,
         } => {
+            // The client runs as the user, so it resolves a default mount point
+            // under $HOME/mnt and hands the absolute path to the daemon.
+            let target = smb::parse_smb_url(&url)?;
+            let home = std::env::var("HOME").map_err(|_| anyhow::anyhow!("HOME is not set"))?;
+            let base = PathBuf::from(home).join("mnt");
+            let mount_point = smb::default_mount_point(&base, &target.share)
+                .to_string_lossy()
+                .into_owned();
+
             let request = MountRequest {
                 url,
-                mount_point: String::new(),
+                mount_point,
                 username: username.unwrap_or_default(),
                 // TODO: read the password securely (KWallet / KDialog prompt), never argv.
                 password: String::new(),

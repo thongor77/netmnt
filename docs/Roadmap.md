@@ -12,18 +12,22 @@
 
 But : lever les risques avant de figer l'implémentation (cf. Architecture.md).
 
-- [ ] Prototype : montage SMB réel via `mount.cifs` depuis le daemon (session)
+- [x] Prototype : parsing `smb://` + résolution du point de montage (module
+      `netmnt-common::smb`, testé : 7 tests unitaires)
+- [x] Prototype : montage SMB réel via `mount.cifs` depuis le daemon, session
+      (module `netmntd::exec`) — mot de passe hors argv via env `PASSWD`
 - [ ] Prototype : récupération du sujet polkit (uid/pid) + `CheckAuthorization`
 - [ ] Prototype : lecture d'un secret KWallet via Secret Service D-Bus
 - [ ] Prototype : génération + `enable --now` d'une unit systemd `.mount`
 
 ## Phase 2 — MVP « Mount » session
 
-- [ ] Implémenter `Mount` (session, guest) bout en bout : Dolphin → CLI → daemon
-- [ ] Choix/convention du point de montage (`~/mnt/<share>`) + collisions
-- [ ] Implémenter `Unmount`
+- [x] Implémenter `Mount` (session, guest) bout en bout : CLI → D-Bus → daemon
+- [x] Convention du point de montage (`~/mnt/<share>`, confiné à la base)
+- [x] Implémenter `Unmount`
 - [ ] Garde polkit sur chaque méthode
-- [ ] Test manuel sur `smb://lab1.local/isos`
+- [ ] Test manuel sur un vrai partage (nécessite root + serveur SMB)
+- [ ] `Mount as…` avec mot de passe (prompt sécurisé, pas encore câblé)
 
 ## Phase 3 — Credentials & persistance
 

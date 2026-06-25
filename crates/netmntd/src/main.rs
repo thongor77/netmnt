@@ -4,10 +4,15 @@
 //! Every method is meant to be guarded by polkit (see `data/polkit/`); the
 //! authorization wiring is a TODO tracked in docs/Roadmap.md.
 
-use netmnt_common::{
-    MountRequest, MountResult, BUS_NAME, OBJECT_PATH,
-};
+mod exec;
+
+use netmnt_common::{MountRequest, MountResult, BUS_NAME, OBJECT_PATH};
 use zbus::interface;
+
+/// Map an internal error into a D-Bus error returned to the client.
+fn to_fdo(err: anyhow::Error) -> zbus::fdo::Error {
+    zbus::fdo::Error::Failed(err.to_string())
+}
 
 /// The manager object served on the system bus.
 struct Manager;
@@ -16,22 +21,20 @@ struct Manager;
 impl Manager {
     /// Mount the share described by `request` and return the resulting mount point.
     ///
-    /// TODO: real implementation — resolve mount point, fetch credentials,
-    /// invoke `mount.cifs`, and (when persistent) generate a systemd `.mount`
-    /// unit. For now this is a stub that echoes the request.
+    /// TODO (Phase 2): guard with polkit using the caller's uid/pid.
     async fn mount(&self, request: MountRequest) -> zbus::fdo::Result<MountResult> {
-        tracing::info!(url = %request.url, "mount requested (stub)");
-        Err(zbus::fdo::Error::NotSupported(
-            "mount() not implemented yet".to_string(),
-        ))
+        tracing::info!(url = %request.url, mount_point = %request.mount_point, "mount requested");
+        let result = exec::perform_mount(&request).await.map_err(to_fdo)?;
+        tracing::info!(mount_point = %result.mount_point, "mounted");
+        Ok(result)
     }
 
     /// Unmount the share currently mounted at `mount_point`.
     async fn unmount(&self, mount_point: String) -> zbus::fdo::Result<()> {
-        tracing::info!(%mount_point, "unmount requested (stub)");
-        Err(zbus::fdo::Error::NotSupported(
-            "unmount() not implemented yet".to_string(),
-        ))
+        tracing::info!(%mount_point, "unmount requested");
+        exec::perform_unmount(&mount_point).await.map_err(to_fdo)?;
+        tracing::info!(%mount_point, "unmounted");
+        Ok(())
     }
 }
 
