@@ -31,6 +31,7 @@ async fn authorize(
         .map_err(to_fdo)?;
 
     if !authorized {
+        tracing::warn!(%action, "polkit denied authorization");
         return Err(zbus::fdo::Error::AccessDenied(format!(
             "polkit denied action {action}"
         )));
@@ -58,7 +59,10 @@ impl Manager {
         };
         authorize(conn, &header, action).await?;
 
-        let result = exec::perform_mount(&request).await.map_err(to_fdo)?;
+        let result = exec::perform_mount(&request).await.map_err(|e| {
+            tracing::warn!(url = %request.url, error = %e, "mount failed");
+            to_fdo(e)
+        })?;
         tracing::info!(mount_point = %result.mount_point, "mounted");
         Ok(result)
     }
@@ -73,7 +77,10 @@ impl Manager {
         tracing::info!(%mount_point, "unmount requested");
         authorize(conn, &header, polkit::ACTION_UNMOUNT).await?;
 
-        exec::perform_unmount(&mount_point).await.map_err(to_fdo)?;
+        exec::perform_unmount(&mount_point).await.map_err(|e| {
+            tracing::warn!(%mount_point, error = %e, "unmount failed");
+            to_fdo(e)
+        })?;
         tracing::info!(%mount_point, "unmounted");
         Ok(())
     }
