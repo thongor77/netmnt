@@ -20,4 +20,6 @@ Exec=netmnt mount --ask %u
 [Desktop Action netmntMountPersistent]
 Name=Mount (persistent)
 Icon=drive-network
-Exec=netmnt mount --persistent %u
+# --ask so an authenticated share gets credentials (KWallet, then a prompt);
+# guest shares still work if the user leaves the prompt empty / cancels.
+Exec=netmnt mount --persistent --ask %u

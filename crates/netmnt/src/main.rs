@@ -65,12 +65,45 @@ fn normalize_local_path(input: &str) -> String {
     }
 }
 
+/// Show a desktop notification. Launched from Dolphin the CLI has no visible
+/// stdout/stderr, so this is the only way the user learns a mount failed.
+/// Best-effort: a missing `notify-send` is silently ignored.
+fn notify(summary: &str, body: &str, error: bool) {
+    let _ = std::process::Command::new("notify-send")
+        .args([
+            "-a",
+            "netmnt",
+            "-u",
+            if error { "critical" } else { "normal" },
+            "-i",
+            "drive-network",
+            summary,
+            body,
+        ])
+        .status();
+}
+
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() {
+    let cli = Cli::parse();
+    match run(cli).await {
+        Ok(message) => {
+            println!("{message}");
+            notify("netmnt", &message, false);
+        }
+        Err(e) => {
+            eprintln!("error: {e}");
+            notify("netmnt — échec", &e.to_string(), true);
+            std::process::exit(1);
+        }
+    }
+}
+
+/// Run the requested command, returning a human-readable success message.
+async fn run(cli: Cli) -> anyhow::Result<String> {
     // Silence unused-constant warnings until the proxy attributes reference them.
     let _ = (BUS_NAME, INTERFACE_NAME, OBJECT_PATH);
 
-    let cli = Cli::parse();
     let connection = zbus::Connection::system().await?;
     let manager = ManagerProxy::new(&connection).await?;
 
@@ -117,7 +150,6 @@ async fn main() -> anyhow::Result<()> {
                 gid: unsafe { libc::getgid() },
             };
             let result = manager.mount(request).await?;
-            println!("mounted at {}", result.mount_point);
 
             // Persist credentials only once the mount actually succeeded.
             if let Some((key, user, pass)) = to_store {
@@ -125,15 +157,16 @@ async fn main() -> anyhow::Result<()> {
                     eprintln!("note: could not save credentials to KWallet: {e}");
                 }
             }
+
+            Ok(format!("Monté : {}", result.mount_point))
         }
         Command::Unmount { mount_point } => {
             // Dolphin's %f may hand us a file:// URL with percent-escapes.
-            manager.unmount(normalize_local_path(&mount_point)).await?;
-            println!("unmounted");
+            let path = normalize_local_path(&mount_point);
+            manager.unmount(path.clone()).await?;
+            Ok(format!("Démonté : {path}"))
         }
     }
-
-    Ok(())
 }
 
 #[cfg(test)]
