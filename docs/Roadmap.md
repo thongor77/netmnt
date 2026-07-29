@@ -18,8 +18,10 @@ But : lever les risques avant de figer l'implémentation (cf. Architecture.md).
       (module `netmntd::exec`) — mot de passe hors argv via env `PASSWD`
 - [x] Prototype : garde polkit via `CheckAuthorization` (sujet `system-bus-name`,
       module `netmntd::polkit`) — câblé sur `Mount`/`Unmount`
-- [ ] Prototype : lecture d'un secret KWallet via Secret Service D-Bus
-- [ ] Prototype : génération + `enable --now` d'une unit systemd `.mount`
+- [x] Prototype : lecture/écriture d'un secret KWallet via `kwallet-query`
+      (module `netmnt::creds`) — voir Phase 3
+- [x] Prototype : génération + `enable --now` d'une unit systemd `.mount`
+      (module `netmntd::exec`) — voir Phase 3
 
 ## Phase 2 — MVP « Mount » session
 
@@ -61,7 +63,8 @@ But : lever les risques avant de figer l'implémentation (cf. Architecture.md).
 - [x] Entrée Dolphin **Unmount** (vue fichiers ; no-op clair sur un dossier non
       monté). Pas dispo dans la sidebar Emplacements (menu non extensible KDE).
 - [ ] Icônes et libellés du servicemenu finalisés
-- [ ] Notifications de succès/échec
+- [x] Notifications de succès/échec (`notify-send` côté CLI, mount + unmount,
+      succès normal / échec critical avec icône `drive-network`)
 - [x] Paquet Arch (`PKGBUILD`) — **publié sur l'AUR** (`netmnt`, v0.1.0-1) ;
       sources versionnées dans `packaging/aur/` (PKGBUILD + .SRCINFO + flux de release)
 

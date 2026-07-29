@@ -102,6 +102,24 @@ In Dolphin: right-click an `smb://` location → **netmnt → Mount**.
 
 Uninstall: `sudo make uninstall`.
 
+## Troubleshooting
+
+**`umount: /home/<user>/mnt/<share>: must be superuser to unmount.`**
+
+You unmounted from the **Places sidebar** (the "Remote" section) instead of the
+file view. That sidebar entry is KDE Solid's own native unmount, which runs as
+your regular user — it has no idea about netmnt and can't reach the polkit-authorized
+daemon that owns the mount. It cannot be extended with a ServiceMenu, so netmnt
+can't hook into it.
+
+Fix: unmount from the **file view** instead — navigate to the parent folder
+(e.g. `~/mnt`), right-click the mounted share, and use **netmnt → Unmount**.
+That entry goes through the daemon and works correctly.
+
+To stop hitting this by accident, right-click the shortcut in the sidebar and
+choose **Hide** — you'll still have the folder itself under `~/mnt` for regular
+navigation.
+
 ## Existing alternatives
 
 Evaluated before starting (see `docs/Decisions-Techniques.md`): **Smb4K**,

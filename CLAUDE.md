@@ -53,8 +53,8 @@ Build/clippy clean, ~13 tests unitaires. Détail et suite : `docs/Roadmap.md`.
 - Résolution mDNS `.local` lente côté kio-smb (Dolphin), **indépendant de netmnt**
   (mount.cifs résout via le système). Workaround : `/etc/samba/smb.conf` avec
   `name resolve order = host bcast`, ou utiliser l'IP.
-- Prochaines pistes : notifications succès/échec (retour visuel depuis Dolphin),
-  puis NFS/SSHFS.
+- Notifications succès/échec : fait (`notify-send` côté CLI, mount + unmount).
+- Prochaines pistes : icônes et libellés du servicemenu, puis NFS/SSHFS.
 
 ## Lancer le projet
 
