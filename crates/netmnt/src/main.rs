@@ -76,7 +76,7 @@ fn notify(summary: &str, body: &str, error: bool) {
             "-u",
             if error { "critical" } else { "normal" },
             "-i",
-            "drive-network",
+            "folder-network",
             summary,
             body,
         ])

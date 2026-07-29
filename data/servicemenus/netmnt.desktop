@@ -6,20 +6,21 @@ X-KDE-Protocols=smb,nfs,ftp,sftp
 Actions=netmntMount;netmntMountAs;netmntMountPersistent;
 X-KDE-Priority=TopLevel
 X-KDE-Submenu=netmnt
+Icon=folder-network
 
 [Desktop Action netmntMount]
 Name=Mount
-Icon=drive-network
+Icon=media-mount
 Exec=netmnt mount %u
 
 [Desktop Action netmntMountAs]
 Name=Mount as…
-Icon=drive-network
+Icon=dialog-password
 Exec=netmnt mount --ask %u
 
 [Desktop Action netmntMountPersistent]
 Name=Mount (persistent)
-Icon=drive-network
+Icon=pin
 # --ask so an authenticated share gets credentials (KWallet, then a prompt);
 # guest shares still work if the user leaves the prompt empty / cancels.
 Exec=netmnt mount --persistent --ask %u

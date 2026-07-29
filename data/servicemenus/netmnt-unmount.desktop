@@ -6,6 +6,7 @@ MimeType=inode/directory;
 X-KDE-Protocols=file
 Actions=netmntUnmount;
 X-KDE-Submenu=netmnt
+Icon=folder-network
 
 [Desktop Action netmntUnmount]
 Name=Unmount

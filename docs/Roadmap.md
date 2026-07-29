@@ -62,9 +62,13 @@ But : lever les risques avant de figer l'implémentation (cf. Architecture.md).
 - [x] `Makefile` d'installation (binaires + dbus/polkit/systemd/servicemenu + unmount)
 - [x] Entrée Dolphin **Unmount** (vue fichiers ; no-op clair sur un dossier non
       monté). Pas dispo dans la sidebar Emplacements (menu non extensible KDE).
-- [ ] Icônes et libellés du servicemenu finalisés
+- [x] Icônes et libellés du servicemenu finalisés — `drive-network` n'existait
+      dans aucun thème installé (fallback générique identique partout, visible
+      sur `Screenshot/icones.png`) ; remplacé par `folder-network` (sous-menu),
+      `media-mount` (Mount), `dialog-password` (Mount as…), `pin` (persistent).
+      Testé en réel dans Dolphin (29/07/2026).
 - [x] Notifications de succès/échec (`notify-send` côté CLI, mount + unmount,
-      succès normal / échec critical avec icône `drive-network`)
+      succès normal / échec critical avec icône `folder-network`)
 - [x] Paquet Arch (`PKGBUILD`) — **publié sur l'AUR** (`netmnt`, v0.1.0-1) ;
       sources versionnées dans `packaging/aur/` (PKGBUILD + .SRCINFO + flux de release)
 
