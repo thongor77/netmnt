@@ -100,6 +100,10 @@ But : lever les risques avant de figer l'implémentation (cf. Architecture.md).
 
 ## Plus tard
 
-- [ ] SSHFS
+- [ ] SSHFS — **en attente de demande réelle**, pas de cas d'usage personnel
+      actuel (contrairement à SMB/NFS, testés contre un vrai partage/export
+      avant d'être codés). Design esquissé mais non engagé : issue
+      [thongor77/netmnt#2](https://github.com/thongor77/netmnt/issues/2)
+      ouverte pour jauger l'intérêt avant de démarrer.
 - [ ] Validation post-reboot du montage persistant NFS
 - [ ] Applet Plasma : liste des montages actifs
