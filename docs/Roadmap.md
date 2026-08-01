@@ -72,7 +72,34 @@ But : lever les risques avant de figer l'implémentation (cf. Architecture.md).
 - [x] Paquet Arch (`PKGBUILD`) — **publié sur l'AUR** (`netmnt`, v0.1.0-1) ;
       sources versionnées dans `packaging/aur/` (PKGBUILD + .SRCINFO + flux de release)
 
+## Phase 5 — NFS
+
+- [x] Module `netmnt-common::nfs` : parsing `nfs://host/export[/subpath]`,
+      source `host:/export` pour `mount.nfs`, point de montage par défaut
+      (dernier segment du chemin d'export) — 6 tests unitaires
+- [x] Dispatch protocole dans `netmntd::exec` (`resolve_target`) : `mount.cifs`
+      vs `mount.nfs`, `Type=cifs` vs `Type=nfs` dans l'unit systemd. Pas de
+      `uid=`/`gid=`/`username=`/KWallet pour NFS — l'accès est contrôlé par
+      l'ACL d'export du serveur (host/réseau), pas par des credentials
+      utilisateur ; l'ownership suit le mapping UID côté serveur.
+- [x] Client CLI : `--ask`/`--username` silencieusement ignorés sur `nfs://`
+      (décision utilisateur ; pas d'erreur, `Mount as…`/`Mount (persistent)`
+      restent utilisables tels quels depuis le servicemenu Dolphin existant,
+      qui déclare déjà `X-KDE-Protocols=smb,nfs,ftp,sftp`)
+- [x] Test réel (01/08/2026) sur un export Synology NFS
+      (`192.168.1.64:/volume1/testing`) : mount session (guest, écriture/lecture/
+      suppression OK), mount persistant (unit `home-<user>-mnt-testing.mount`,
+      `Type=nfs`, `Options=rw,_netdev`, pas de fichier credentials généré),
+      démontage (unit + dossier de point de montage nettoyés). Validation post-
+      reboot **à faire** (prévue plus tard dans la journée par l'utilisateur).
+- [x] Gotcha découvert et documenté (README Troubleshooting) : une ACL POSIX
+      sur le dossier exporté (Synology `synoacltool`, visible via `ls -ld` avec
+      un `+`) prime sur les bits Unix classiques côté NFS et peut bloquer tout
+      accès malgré un `chmod 777` — il faut la supprimer (`synoacltool -del` /
+      `setfacl -b`) en plus d'un `chown`/`chmod` correct.
+
 ## Plus tard
 
-- [ ] NFS, SSHFS
+- [ ] SSHFS
+- [ ] Validation post-reboot du montage persistant NFS
 - [ ] Applet Plasma : liste des montages actifs

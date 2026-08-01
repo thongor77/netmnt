@@ -8,8 +8,27 @@ mod creds;
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
-use netmnt_common::{smb, MountRequest, MountResult, BUS_NAME, INTERFACE_NAME, OBJECT_PATH};
+use netmnt_common::{nfs, smb, MountRequest, MountResult, BUS_NAME, INTERFACE_NAME, OBJECT_PATH};
 use zbus::proxy;
+
+/// A parsed mount source, dispatched by URL scheme.
+///
+/// NFS access is granted by the server's export ACL, not username/password,
+/// so there is no `Nfs` credential path — see `run()`.
+enum Target {
+    Smb(smb::SmbTarget),
+    Nfs(nfs::NfsTarget),
+}
+
+fn parse_url(url: &str) -> anyhow::Result<Target> {
+    if let Ok(t) = smb::parse_smb_url(url) {
+        return Ok(Target::Smb(t));
+    }
+    if let Ok(t) = nfs::parse_nfs_url(url) {
+        return Ok(Target::Nfs(t));
+    }
+    anyhow::bail!("unsupported URL scheme (expected smb:// or nfs://): {url}")
+}
 
 /// Mount network shares from a single click.
 #[derive(Parser)]
@@ -116,25 +135,32 @@ async fn run(cli: Cli) -> anyhow::Result<String> {
         } => {
             // The client runs as the user, so it resolves a default mount point
             // under $HOME/mnt and hands the absolute path to the daemon.
-            let target = smb::parse_smb_url(&url)?;
+            let target = parse_url(&url)?;
             let home = std::env::var("HOME").map_err(|_| anyhow::anyhow!("HOME is not set"))?;
             let base = PathBuf::from(home).join("mnt");
-            let mount_point = smb::default_mount_point(&base, &target.share)
-                .to_string_lossy()
-                .into_owned();
+            let mount_point = match &target {
+                Target::Smb(t) => smb::default_mount_point(&base, &t.share),
+                Target::Nfs(t) => nfs::default_mount_point(&base, &t.export),
+            }
+            .to_string_lossy()
+            .into_owned();
 
-            // Gather credentials only for "mount as" (--ask) or an explicit user;
-            // a plain mount stays a guest mount.
+            // Gather credentials only for SMB "mount as" (--ask) or an explicit
+            // user; a plain mount stays a guest mount. NFS has no
+            // username/password equivalent (access is server-ACL based), so
+            // --ask/--username are silently ignored there.
             let mut to_store = None;
-            let (username, password) = if ask || username.is_some() {
-                let wallet_key = smb::unc_path(&target);
-                let creds = creds::acquire(&url, &wallet_key, &username.unwrap_or_default())?;
-                if creds.freshly_entered && creds.remember && !creds.password.is_empty() {
-                    to_store = Some((wallet_key, creds.username.clone(), creds.password.clone()));
+            let (username, password) = match &target {
+                Target::Smb(t) if ask || username.is_some() => {
+                    let wallet_key = smb::unc_path(t);
+                    let creds = creds::acquire(&url, &wallet_key, &username.unwrap_or_default())?;
+                    if creds.freshly_entered && creds.remember && !creds.password.is_empty() {
+                        to_store =
+                            Some((wallet_key, creds.username.clone(), creds.password.clone()));
+                    }
+                    (creds.username, creds.password)
                 }
-                (creds.username, creds.password)
-            } else {
-                (String::new(), String::new())
+                _ => (String::new(), String::new()),
             };
 
             // The client runs as the user, so its own uid/gid are the desired

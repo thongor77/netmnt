@@ -10,7 +10,7 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::process::Stdio;
 
-use netmnt_common::{smb, MountRequest, MountResult};
+use netmnt_common::{nfs, smb, MountRequest, MountResult};
 use tokio::process::Command;
 
 /// Directory holding root-only credentials files for persistent mounts.
@@ -18,14 +18,46 @@ const CRED_DIR: &str = "/etc/netmnt";
 /// Where generated systemd `.mount` units are written.
 const UNIT_DIR: &str = "/etc/systemd/system";
 
-/// Mount the share for the current session via `mount.cifs`.
+/// Protocol-specific pieces of a mount: what to hand `mount.<program>`, what
+/// `Type=` a systemd unit needs, and whether username/password/uid/gid apply.
+///
+/// NFS access is granted by the server's export ACL (host/network based) and
+/// ownership follows the server's own UID mapping, so there is no
+/// username/password or `uid=`/`gid=` option equivalent to CIFS.
+struct Target {
+    source: String,
+    fs_type: &'static str,
+    mount_program: &'static str,
+    supports_credentials: bool,
+}
+
+fn resolve_target(url: &str) -> anyhow::Result<Target> {
+    if let Ok(t) = smb::parse_smb_url(url) {
+        return Ok(Target {
+            source: smb::unc_path(&t),
+            fs_type: "cifs",
+            mount_program: "mount.cifs",
+            supports_credentials: true,
+        });
+    }
+    if let Ok(t) = nfs::parse_nfs_url(url) {
+        return Ok(Target {
+            source: nfs::nfs_source(&t),
+            fs_type: "nfs",
+            mount_program: "mount.nfs",
+            supports_credentials: false,
+        });
+    }
+    anyhow::bail!("unsupported URL scheme (expected smb:// or nfs://): {url}");
+}
+
+/// Mount the share for the current session via `mount.cifs`/`mount.nfs`.
 pub async fn perform_mount(request: &MountRequest) -> anyhow::Result<MountResult> {
-    let target = smb::parse_smb_url(&request.url)?;
-    let source = smb::unc_path(&target);
+    let target = resolve_target(&request.url)?;
     let mount_point = mount_point_of(request)?;
 
     // Idempotent: if something is already mounted here, treat it as success
-    // instead of letting mount.cifs fail with a cryptic EBUSY.
+    // instead of letting the mount helper fail with a cryptic EBUSY.
     if is_mountpoint(mount_point).await {
         tracing::info!(mount_point = %mount_point.display(), "already mounted");
         return Ok(mounted(mount_point, false));
@@ -35,35 +67,40 @@ pub async fn perform_mount(request: &MountRequest) -> anyhow::Result<MountResult
         anyhow::anyhow!("cannot create mount point {}: {e}", mount_point.display())
     })?;
 
-    let mut options = vec![
-        "rw".to_string(),
-        format!("uid={}", request.uid),
-        format!("gid={}", request.gid),
-    ];
-    if request.username.is_empty() {
-        options.push("guest".to_string());
-    } else {
-        options.push(format!("username={}", request.username));
+    let mut options = vec!["rw".to_string()];
+    if target.supports_credentials {
+        options.push(format!("uid={}", request.uid));
+        options.push(format!("gid={}", request.gid));
+        if request.username.is_empty() {
+            options.push("guest".to_string());
+        } else {
+            options.push(format!("username={}", request.username));
+        }
     }
 
-    let mut cmd = Command::new("mount.cifs");
-    cmd.arg(&source)
+    let mut cmd = Command::new(target.mount_program);
+    cmd.arg(&target.source)
         .arg(mount_point)
         .arg("-o")
         .arg(options.join(","))
-        // Never let mount.cifs block on an interactive password prompt: the
-        // daemon has no terminal, so a missing password must fail, not hang.
+        // Never let the mount helper block on an interactive password prompt:
+        // the daemon has no terminal, so a missing password must fail, not hang.
         .stdin(Stdio::null());
 
     // Always set PASSWD when a username is given (even if empty) to suppress prompting.
-    if !request.username.is_empty() {
+    if target.supports_credentials && !request.username.is_empty() {
         cmd.env("PASSWD", &request.password);
     }
 
     let output = cmd.output().await?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        anyhow::bail!("mount.cifs failed ({}): {}", output.status, stderr.trim());
+        anyhow::bail!(
+            "{} failed ({}): {}",
+            target.mount_program,
+            output.status,
+            stderr.trim()
+        );
     }
 
     Ok(mounted(mount_point, false))
@@ -71,8 +108,7 @@ pub async fn perform_mount(request: &MountRequest) -> anyhow::Result<MountResult
 
 /// Mount the share and register a systemd `.mount` unit so it survives reboot.
 pub async fn perform_persistent_mount(request: &MountRequest) -> anyhow::Result<MountResult> {
-    let target = smb::parse_smb_url(&request.url)?;
-    let source = smb::unc_path(&target);
+    let target = resolve_target(&request.url)?;
     let mount_point = mount_point_of(request)?;
 
     tokio::fs::create_dir_all(mount_point).await?;
@@ -82,21 +118,25 @@ pub async fn perform_persistent_mount(request: &MountRequest) -> anyhow::Result<
 
     // Credentials go in a root-only file referenced by the unit (never in the
     // world-readable unit itself).
-    let mut options = vec![
-        "rw".to_string(),
-        "_netdev".to_string(),
-        format!("uid={}", request.uid),
-        format!("gid={}", request.gid),
-    ];
-    if request.username.is_empty() {
-        options.push("guest".to_string());
-    } else {
-        let cred_path = format!("{CRED_DIR}/{base}.cred");
-        write_credentials(&cred_path, &request.username, &request.password).await?;
-        options.push(format!("credentials={cred_path}"));
+    let mut options = vec!["rw".to_string(), "_netdev".to_string()];
+    if target.supports_credentials {
+        options.push(format!("uid={}", request.uid));
+        options.push(format!("gid={}", request.gid));
+        if request.username.is_empty() {
+            options.push("guest".to_string());
+        } else {
+            let cred_path = format!("{CRED_DIR}/{base}.cred");
+            write_credentials(&cred_path, &request.username, &request.password).await?;
+            options.push(format!("credentials={cred_path}"));
+        }
     }
 
-    let unit = mount_unit(&source, &mount_point.to_string_lossy(), &options.join(","));
+    let unit = mount_unit(
+        target.fs_type,
+        &target.source,
+        &mount_point.to_string_lossy(),
+        &options.join(","),
+    );
     tokio::fs::write(format!("{UNIT_DIR}/{unit_name}"), unit).await?;
 
     run("systemctl", &["daemon-reload"]).await?;
@@ -219,7 +259,7 @@ async fn run(program: &str, args: &[&str]) -> anyhow::Result<()> {
 }
 
 /// Render a systemd `.mount` unit.
-fn mount_unit(what: &str, where_: &str, options: &str) -> String {
+fn mount_unit(fs_type: &str, what: &str, where_: &str, options: &str) -> String {
     format!(
         "[Unit]\n\
          Description=netmnt persistent mount of {what}\n\
@@ -229,7 +269,7 @@ fn mount_unit(what: &str, where_: &str, options: &str) -> String {
          [Mount]\n\
          What={what}\n\
          Where={where_}\n\
-         Type=cifs\n\
+         Type={fs_type}\n\
          Options={options}\n\
          \n\
          [Install]\n\
@@ -243,11 +283,29 @@ mod tests {
 
     #[test]
     fn renders_mount_unit() {
-        let unit = mount_unit("//lab1.local/isos", "/home/u/mnt/isos", "rw,_netdev,guest");
+        let unit = mount_unit(
+            "cifs",
+            "//lab1.local/isos",
+            "/home/u/mnt/isos",
+            "rw,_netdev,guest",
+        );
         assert!(unit.contains("What=//lab1.local/isos"));
         assert!(unit.contains("Where=/home/u/mnt/isos"));
         assert!(unit.contains("Type=cifs"));
         assert!(unit.contains("Options=rw,_netdev,guest"));
         assert!(unit.contains("[Install]"));
+    }
+
+    #[test]
+    fn renders_nfs_mount_unit() {
+        let unit = mount_unit(
+            "nfs",
+            "192.168.1.64:/volume1/testing",
+            "/home/u/mnt/testing",
+            "rw,_netdev",
+        );
+        assert!(unit.contains("What=192.168.1.64:/volume1/testing"));
+        assert!(unit.contains("Type=nfs"));
+        assert!(unit.contains("Options=rw,_netdev"));
     }
 }

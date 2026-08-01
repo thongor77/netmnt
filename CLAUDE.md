@@ -6,10 +6,10 @@
 
 ## Description
 
-Outil Linux/KDE pour monter des partages réseau (SMB/CIFS d'abord) depuis le menu
+Outil Linux/KDE pour monter des partages réseau (SMB/CIFS et NFS) depuis le menu
 contextuel de Dolphin, avec trois actions : `Mount`, `Mount as…` (autres
-credentials), `Mount (persistent)`. Le montage réel est fait par un service Rust
-privilégié.
+credentials, SMB seulement), `Mount (persistent)`. Le montage réel est fait par
+un service Rust privilégié.
 
 ## Stack
 
@@ -17,11 +17,14 @@ privilégié.
 - `zbus` (D-Bus), `tokio`, `clap`, `serde`, `tracing`
 - systemd (cycle de vie du daemon + units `.mount` persistantes)
 - polkit (autorisation), KDE ServiceMenus (intégration Dolphin)
-- Backend : `mount.cifs` (cifs-utils), KWallet pour les credentials
+- Backend : `mount.cifs` (cifs-utils) et `mount.nfs` (nfs-utils) ; KWallet pour
+  les credentials SMB (NFS n'en a pas — accès géré par l'ACL d'export serveur)
 
 ## État actuel
 
-**Fonctionnel (25/06/2026)** — testé en réel sur le NAS `lab1.local`, validé après reboot :
+**Fonctionnel (01/08/2026)** — SMB testé en réel sur le NAS `lab1.local`,
+validé après reboot ; NFS testé en réel sur un export Synology
+(`192.168.1.64:/volume1/testing`), validation post-reboot en attente :
 
 - **Mount** (session, invité) : OK, sans prompt (polkit `allow_active=yes`).
 - **Mount as…** (`--ask`) : prompt kdialog/tty + KWallet (lecture/écriture), mot
@@ -31,11 +34,17 @@ privilégié.
   l'auth admin polkit. **Validé : survit au reboot** (remonté au boot par systemd).
 - **Unmount** : par point de montage ; démantèle l'unit systemd si persistant.
   Entrée Dolphin **netmnt → Unmount**. Accepte chemin nu ou URL `file://`.
-- **Ownership** : montages possédés par l'utilisateur (`uid=`/`gid=` envoyés par
-  le client). **Validé après reboot** : montage possédé par l'utilisateur appelant,
-  lecture/écriture OK.
+- **Ownership** : montages SMB possédés par l'utilisateur (`uid=`/`gid=` envoyés
+  par le client). **Validé après reboot** : montage possédé par l'utilisateur
+  appelant, lecture/écriture OK.
+- **NFS** (`nfs://host/export`) : `Mount` et `Mount (persistent)` fonctionnent
+  comme pour SMB, mais sans credentials (`--ask`/`--username` silencieusement
+  ignorés — pas d'équivalent KWallet, pas d'option `uid=`/`gid=`). L'accès et
+  l'ownership sont entièrement gérés côté serveur (ACL d'export + mapping UID).
+  Testé en réel (01/08/2026) : mount session, écriture/lecture/suppression,
+  mount persistant (unit `Type=nfs`), démontage — tous OK.
 
-Build/clippy clean, ~13 tests unitaires. Détail et suite : `docs/Roadmap.md`.
+Build/clippy clean, ~20 tests unitaires. Détail et suite : `docs/Roadmap.md`.
 
 ### Points ouverts / gotchas
 - **Démonter depuis la vue principale, pas depuis la sidebar.** L'entrée
@@ -54,7 +63,12 @@ Build/clippy clean, ~13 tests unitaires. Détail et suite : `docs/Roadmap.md`.
   (mount.cifs résout via le système). Workaround : `/etc/samba/smb.conf` avec
   `name resolve order = host bcast`, ou utiliser l'IP.
 - Notifications succès/échec : fait (`notify-send` côté CLI, mount + unmount).
-- Prochaines pistes : icônes et libellés du servicemenu, puis NFS/SSHFS.
+- **Gotcha NFS/Synology** : une ACL POSIX sur le dossier exporté (`ls -ld`
+  affiche un `+`, gérée via `synoacltool` sur DSM) prime sur les bits Unix
+  classiques et peut bloquer tout accès malgré un `chmod` correct — même sans
+  "Windows ACL" visible dans l'UI DSM. La supprimer (`synoacltool -del` /
+  `setfacl -b`) en plus d'un `chown`/`chmod` adapté. Voir README Troubleshooting.
+- Prochaine piste : SSHFS.
 
 ## Lancer le projet
 
@@ -62,6 +76,7 @@ Build/clippy clean, ~13 tests unitaires. Détail et suite : `docs/Roadmap.md`.
 cargo build           # compile les 3 crates
 cargo run -p netmntd  # daemon (échoue à claim org.netmnt sans la conf D-Bus installée)
 cargo run -p netmnt -- mount smb://lab1.local/isos
+cargo run -p netmnt -- mount nfs://192.168.1.64/volume1/testing
 ```
 
 Installation système (à terme) : conf D-Bus dans `/usr/share/dbus-1/system.d/`,
@@ -72,8 +87,9 @@ policy polkit dans `/usr/share/polkit-1/actions/`, unit dans
 
 3 crates : `netmnt` (CLI non-privilégié, appelé par le servicemenu) →
 D-Bus système → `netmntd` (daemon privilégié, owner de `org.netmnt`) →
-`mount.cifs` / unit systemd. Types partagés dans `netmnt-common`.
-Détail : `docs/Architecture.md`. Choix techniques : `docs/Decisions-Techniques.md`.
+`mount.cifs`/`mount.nfs` / unit systemd. Types partagés dans `netmnt-common`
+(`smb.rs`, `nfs.rs`). Détail : `docs/Architecture.md`. Choix techniques :
+`docs/Decisions-Techniques.md`.
 
 ## Décisions techniques
 

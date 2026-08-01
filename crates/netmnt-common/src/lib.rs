@@ -8,6 +8,7 @@
 use serde::{Deserialize, Serialize};
 use zvariant::Type;
 
+pub mod nfs;
 pub mod smb;
 
 /// Well-known bus name owned by the daemon on the system bus.

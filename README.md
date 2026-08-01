@@ -5,12 +5,12 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux-informational.svg?logo=linux&logoColor=white)](#install--try-it-real-mount)
 [![Desktop](https://img.shields.io/badge/desktop-KDE%20%7C%20Dolphin-1d99f3.svg?logo=kde&logoColor=white)](#)
-[![Shares](https://img.shields.io/badge/shares-SMB%2FCIFS-purple.svg)](#)
+[![Shares](https://img.shields.io/badge/shares-SMB%2FCIFS%20%7C%20NFS-purple.svg)](#)
 [![Donate](https://img.shields.io/badge/Donate-PayPal-blue.svg)](https://www.paypal.com/donate/?business=JFQGY7NU3ANCN&no_recurring=0&item_name=Every+donation%2C+no+matter+how+small%2C+helps+me+keep+this+project+alive.+Thank+you%21%0A&currency_code=EUR)
 [![Bitcoin](https://img.shields.io/badge/Donate-Bitcoin-orange.svg)](#support-the-project)
 
-Mount network shares (SMB/CIFS, and later NFS) from a single click in your file
-manager — and unmount them just as easily.
+Mount network shares (SMB/CIFS and NFS, SSHFS later) from a single click in your
+file manager — and unmount them just as easily.
 
 ## Problem
 
@@ -35,16 +35,17 @@ netmnt adds three actions to the file manager context menu:
 - **systemd** — daemon lifecycle + persistent `.mount` units
 - **polkit** — privilege authorization
 - **KDE ServiceMenus** — Dolphin context-menu integration
-- Backend: `mount.cifs` (cifs-utils); KWallet for credential storage
+- Backend: `mount.cifs` (cifs-utils) and `mount.nfs` (nfs-utils); KWallet for
+  SMB credential storage (NFS has none — access is server-ACL based)
 
 ## Architecture (short)
 
 ```
-Dolphin (right-click smb://) → ServiceMenu .desktop → netmnt (CLI, unprivileged)
-                                                          │ D-Bus (system bus)
-                                                   netmntd (daemon, privileged)
-                                                          │ polkit-authorized
-                                                   mount.cifs / systemd .mount
+Dolphin (right-click smb:// or nfs://) → ServiceMenu .desktop → netmnt (CLI, unprivileged)
+                                                                   │ D-Bus (system bus)
+                                                            netmntd (daemon, privileged)
+                                                                   │ polkit-authorized
+                                                     mount.cifs / mount.nfs / systemd .mount
 ```
 
 - `crates/netmnt` — unprivileged CLI client, invoked by the service menu.
@@ -59,8 +60,15 @@ Full detail: [`docs/Architecture.md`](docs/Architecture.md).
 reboot. Mount (guest), Mount as… (authenticated, via kdialog + KWallet, password
 kept out of argv), persistent mounts (systemd `.mount` units that survive reboot),
 and Unmount (which also tears down the unit and cleans up the empty mount-point
-directory) all work. Mounts are owned by the calling user. SMB/CIFS only for now;
-NFS and SSHFS are next. See [`docs/Roadmap.md`](docs/Roadmap.md).
+directory) all work. Mounts are owned by the calling user.
+
+**NFS** (`nfs://host/export`) is also supported: Mount and Mount (persistent)
+work the same way, minus credentials — NFS access is controlled by the server's
+export ACL (host/network based), not username/password, so `Mount as…` silently
+behaves like a plain `Mount` on `nfs://` locations. Ownership on an NFS mount
+follows the server's own UID mapping (unlike CIFS, there is no `uid=`/`gid=`
+mount option), so the exported folder's Unix permissions need to allow your uid.
+SSHFS is next. See [`docs/Roadmap.md`](docs/Roadmap.md).
 
 ## Build
 
@@ -88,6 +96,11 @@ netmnt unmount ~/mnt/public
 # Authenticated share ("mount as"): prompts for credentials (kdialog or tty),
 # can store them in KWallet, and reuses them next time.
 netmnt mount --ask smb://nas.local/wiki
+
+# NFS: no credentials involved — access is granted by the export's ACL on the
+# server (e.g. a Synology NFS rule allowing your client's IP/network).
+netmnt mount nfs://nas.local/volume1/share
+netmnt mount --persistent nfs://nas.local/volume1/share
 ```
 
 To watch the daemon logs during a test, run it in the foreground instead of
@@ -119,6 +132,24 @@ That entry goes through the daemon and works correctly.
 To stop hitting this by accident, right-click the shortcut in the sidebar and
 choose **Hide** — you'll still have the folder itself under `~/mnt` for regular
 navigation.
+
+**NFS mount succeeds but every file access is `Permission denied` (mode shows
+as `0`).**
+
+The export folder has a POSIX ACL (`ls -ld` shows a trailing `+`) that denies
+your uid, overriding the classic Unix `rwx` bits — common on Synology NAS even
+without "Windows ACL" in the DSM permissions UI. Check and clear it on the
+server:
+
+```sh
+getfacl /path/to/export      # or: sudo synoacltool -get /path/to/export
+sudo setfacl -b /path/to/export   # or: sudo synoacltool -del /path/to/export
+sudo chown <uid>:<gid> /path/to/export
+sudo chmod 750 /path/to/export    # or whatever fits your access model
+```
+
+Then unmount and remount (a mount already up may hold onto stale attributes
+from before the fix).
 
 ## Existing alternatives
 

@@ -73,8 +73,22 @@ credentials et persistance sont encodés en champs plats plutôt qu'en enums Rus
 
 Ces inconnues doivent être levées par prototype avant de figer l'architecture.
 
+## Support NFS
+
+`netmnt-common::nfs` fait pour `nfs://` ce que `smb.rs` fait pour `smb://`
+(parsing d'URL, point de montage par défaut). Côté daemon, `netmntd::exec`
+détermine le protocole (`resolve_target`) et choisit `mount.cifs`/`mount.nfs`
+et `Type=cifs`/`Type=nfs` en conséquence.
+
+Différence structurelle assumée : NFS n'a pas d'équivalent aux options
+`uid=`/`gid=`/`username=` de CIFS. L'accès est contrôlé par l'ACL d'export du
+serveur (host/réseau), et l'ownership des fichiers suit le mapping UID côté
+serveur — donc pas de KWallet ni de prompt de credentials pour NFS ; `Mount
+as…`/`Mount (persistent)` (qui appellent `--ask`) ignorent silencieusement
+l'absence de credentials et se comportent comme `Mount`.
+
 ## Extensions futures
 
-- NFS, SSHFS (le `CredentialSource`/`MountRequest` est déjà générique).
+- SSHFS (le `MountRequest` est déjà générique).
 - Applet Plasma / notifications.
 - Liste des montages actifs + démontage depuis le menu.
