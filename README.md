@@ -1,6 +1,6 @@
-# netmnt · v0.1.0
+# netmnt · v0.2.0
 
-[![Version](https://img.shields.io/badge/version-0.1.0-brightgreen.svg)](https://github.com/thongor77/netmnt/releases/latest)
+[![Version](https://img.shields.io/badge/version-0.2.0-brightgreen.svg)](https://github.com/thongor77/netmnt/releases/latest)
 [![Rust](https://img.shields.io/badge/Rust-2021-orange.svg?logo=rust&logoColor=white)](https://www.rust-lang.org/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux-informational.svg?logo=linux&logoColor=white)](#install--try-it-real-mount)
@@ -56,7 +56,7 @@ Full detail: [`docs/Architecture.md`](docs/Architecture.md).
 
 ## Status
 
-**Working (v0.1.0)** — tested end to end against a real NAS, including across a
+**Working (v0.2.0)** — tested end to end against a real NAS, including across a
 reboot. Mount (guest), Mount as… (authenticated, via kdialog + KWallet, password
 kept out of argv), persistent mounts (systemd `.mount` units that survive reboot),
 and Unmount (which also tears down the unit and cleans up the empty mount-point
