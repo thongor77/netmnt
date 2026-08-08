@@ -1,13 +1,13 @@
 # Maintainer: thongor77 <magetriste@proton.me>
 pkgname=netmnt
 pkgver=0.2.0
-pkgrel=1
+pkgrel=2
 pkgdesc="Mount SMB/NFS network shares from Dolphin's right-click menu (Rust + D-Bus + polkit)"
 arch=('x86_64')
 url="https://github.com/thongor77/netmnt"
 license=('MIT')
 depends=('cifs-utils' 'nfs-utils' 'polkit')
-makedepends=('cargo')
+makedepends=('cargo' 'gettext')
 optdepends=('kdialog: graphical credential prompt for "Mount as…"'
             'kwallet: store credentials for authenticated shares'
             'dolphin: file-manager integration (KDE service menus)')

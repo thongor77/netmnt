@@ -7,7 +7,8 @@ mod creds;
 
 use std::path::PathBuf;
 
-use clap::{Parser, Subcommand};
+use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
+use netmnt_common::i18n::{self, tr, tr_args};
 use netmnt_common::{nfs, smb, MountRequest, MountResult, BUS_NAME, INTERFACE_NAME, OBJECT_PATH};
 use zbus::proxy;
 
@@ -27,12 +28,16 @@ fn parse_url(url: &str) -> anyhow::Result<Target> {
     if let Ok(t) = nfs::parse_nfs_url(url) {
         return Ok(Target::Nfs(t));
     }
-    anyhow::bail!("unsupported URL scheme (expected smb:// or nfs://): {url}")
+    let message = tr_args(
+        "Unsupported URL scheme (expected smb:// or nfs://): {url}",
+        &[("url", url)],
+    );
+    anyhow::bail!(message)
 }
 
-/// Mount network shares from a single click.
+// User-visible descriptions are applied by localized_cli_command().
 #[derive(Parser)]
-#[command(name = "netmnt", version, about)]
+#[command(name = "netmnt", version)]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -40,25 +45,50 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Mount a share for the current session.
     Mount {
-        /// Source URL, e.g. smb://lab1.local/isos
         url: String,
-        /// Persist the mount across reboots (systemd .mount unit).
         #[arg(long)]
         persistent: bool,
-        /// Use an explicit username (implies credential prompt for the password).
         #[arg(long)]
         username: Option<String>,
-        /// "Mount as": ask for credentials (or reuse a stored KWallet entry).
         #[arg(long)]
         ask: bool,
     },
-    /// Unmount a previously mounted share by its mount point.
     Unmount {
-        /// Absolute path of the mount point.
         mount_point: String,
     },
+}
+
+fn localized_cli_command() -> clap::Command {
+    Cli::command()
+        .about(tr("Mount network shares from a single click"))
+        .mut_subcommand("mount", |command| {
+            command
+                .about(tr("Mount a share for the current session"))
+                .mut_arg("url", |arg| {
+                    arg.help(tr("Source URL, for example smb://nas.local/share"))
+                })
+                .mut_arg("persistent", |arg| {
+                    arg.help(tr(
+                        "Keep the mount across reboots using a systemd mount unit",
+                    ))
+                })
+                .mut_arg("username", |arg| {
+                    arg.help(tr("Use an explicit username and prompt for its password"))
+                })
+                .mut_arg("ask", |arg| {
+                    arg.help(tr(
+                        "Ask for credentials or reuse credentials stored in KWallet",
+                    ))
+                })
+        })
+        .mut_subcommand("unmount", |command| {
+            command
+                .about(tr("Unmount a share by its mount point"))
+                .mut_arg("mount_point", |arg| {
+                    arg.help(tr("Absolute path of the mount point"))
+                })
+        })
 }
 
 #[proxy(
@@ -104,15 +134,18 @@ fn notify(summary: &str, body: &str, error: bool) {
 
 #[tokio::main]
 async fn main() {
-    let cli = Cli::parse();
+    i18n::init();
+    let cli = Cli::from_arg_matches(&localized_cli_command().get_matches())
+        .expect("clap generated invalid command-line matches");
     match run(cli).await {
         Ok(message) => {
             println!("{message}");
             notify("netmnt", &message, false);
         }
         Err(e) => {
-            eprintln!("error: {e}");
-            notify("netmnt — échec", &e.to_string(), true);
+            let message = tr_args("Error: {error}", &[("error", &e.to_string())]);
+            eprintln!("{message}");
+            notify(&tr("netmnt — failure"), &e.to_string(), true);
             std::process::exit(1);
         }
     }
@@ -136,7 +169,8 @@ async fn run(cli: Cli) -> anyhow::Result<String> {
             // The client runs as the user, so it resolves a default mount point
             // under $HOME/mnt and hands the absolute path to the daemon.
             let target = parse_url(&url)?;
-            let home = std::env::var("HOME").map_err(|_| anyhow::anyhow!("HOME is not set"))?;
+            let home_error = tr("HOME is not set");
+            let home = std::env::var("HOME").map_err(|_| anyhow::anyhow!(home_error))?;
             let base = PathBuf::from(home).join("mnt");
             let mount_point = match &target {
                 Target::Smb(t) => smb::default_mount_point(&base, &t.share),
@@ -180,17 +214,26 @@ async fn run(cli: Cli) -> anyhow::Result<String> {
             // Persist credentials only once the mount actually succeeded.
             if let Some((key, user, pass)) = to_store {
                 if let Err(e) = creds::kwallet_write(&key, &user, &pass) {
-                    eprintln!("note: could not save credentials to KWallet: {e}");
+                    eprintln!(
+                        "{}",
+                        tr_args(
+                            "Note: could not save credentials to KWallet: {error}",
+                            &[("error", &e.to_string())],
+                        )
+                    );
                 }
             }
 
-            Ok(format!("Monté : {}", result.mount_point))
+            Ok(tr_args(
+                "Mounted at: {path}",
+                &[("path", &result.mount_point)],
+            ))
         }
         Command::Unmount { mount_point } => {
             // Dolphin's %f may hand us a file:// URL with percent-escapes.
             let path = normalize_local_path(&mount_point);
             manager.unmount(path.clone()).await?;
-            Ok(format!("Démonté : {path}"))
+            Ok(tr_args("Unmounted: {path}", &[("path", &path)]))
         }
     }
 }

@@ -10,6 +10,7 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::process::Stdio;
 
+use netmnt_common::i18n::{tr, tr_args};
 use netmnt_common::{nfs, smb, MountRequest, MountResult};
 use tokio::process::Command;
 
@@ -48,7 +49,11 @@ fn resolve_target(url: &str) -> anyhow::Result<Target> {
             supports_credentials: false,
         });
     }
-    anyhow::bail!("unsupported URL scheme (expected smb:// or nfs://): {url}");
+    let message = tr_args(
+        "Unsupported URL scheme (expected smb:// or nfs://): {url}",
+        &[("url", url)],
+    );
+    anyhow::bail!(message);
 }
 
 /// Mount the share for the current session via `mount.cifs`/`mount.nfs`.
@@ -64,7 +69,14 @@ pub async fn perform_mount(request: &MountRequest) -> anyhow::Result<MountResult
     }
 
     tokio::fs::create_dir_all(mount_point).await.map_err(|e| {
-        anyhow::anyhow!("cannot create mount point {}: {e}", mount_point.display())
+        let message = tr_args(
+            "Could not create mount point {path}: {error}",
+            &[
+                ("path", &mount_point.display().to_string()),
+                ("error", &e.to_string()),
+            ],
+        );
+        anyhow::anyhow!(message)
     })?;
 
     let mut options = vec!["rw".to_string()];
@@ -95,12 +107,15 @@ pub async fn perform_mount(request: &MountRequest) -> anyhow::Result<MountResult
     let output = cmd.output().await?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        anyhow::bail!(
-            "{} failed ({}): {}",
-            target.mount_program,
-            output.status,
-            stderr.trim()
+        let message = tr_args(
+            "{program} failed ({status}): {error}",
+            &[
+                ("program", target.mount_program),
+                ("status", &output.status.to_string()),
+                ("error", stderr.trim()),
+            ],
         );
+        anyhow::bail!(message);
     }
 
     Ok(mounted(mount_point, false))
@@ -169,12 +184,20 @@ pub async fn perform_unmount(mount_point: &str) -> anyhow::Result<()> {
     }
 
     if !is_mountpoint(path).await {
-        anyhow::bail!("{mount_point} is not mounted");
+        let message = tr_args("{path} is not mounted", &[("path", mount_point)]);
+        anyhow::bail!(message);
     }
     let output = Command::new("umount").arg(mount_point).output().await?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        anyhow::bail!("umount failed ({}): {}", output.status, stderr.trim());
+        let message = tr_args(
+            "umount failed ({status}): {error}",
+            &[
+                ("status", &output.status.to_string()),
+                ("error", stderr.trim()),
+            ],
+        );
+        anyhow::bail!(message);
     }
     remove_empty_mount_point(path).await;
     Ok(())
@@ -198,7 +221,8 @@ async fn remove_empty_mount_point(path: &Path) {
 
 fn mount_point_of(request: &MountRequest) -> anyhow::Result<&Path> {
     if request.mount_point.is_empty() {
-        anyhow::bail!("mount_point must be provided by the client");
+        let message = tr("The client did not provide a mount point");
+        anyhow::bail!(message);
     }
     Ok(Path::new(&request.mount_point))
 }
@@ -230,7 +254,8 @@ async fn systemd_escape_mount(path: &Path) -> anyhow::Result<String> {
         .output()
         .await?;
     if !out.status.success() {
-        anyhow::bail!("systemd-escape failed");
+        let message = tr("systemd-escape could not create the mount unit name");
+        anyhow::bail!(message);
     }
     Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
 }
@@ -249,11 +274,15 @@ async fn write_credentials(path: &str, username: &str, password: &str) -> anyhow
 async fn run(program: &str, args: &[&str]) -> anyhow::Result<()> {
     let out = Command::new(program).args(args).output().await?;
     if !out.status.success() {
-        anyhow::bail!(
-            "{program} {} failed: {}",
-            args.join(" "),
-            String::from_utf8_lossy(&out.stderr).trim()
+        let message = tr_args(
+            "{program} {arguments} failed: {error}",
+            &[
+                ("program", program),
+                ("arguments", &args.join(" ")),
+                ("error", String::from_utf8_lossy(&out.stderr).trim()),
+            ],
         );
+        anyhow::bail!(message);
     }
     Ok(())
 }
