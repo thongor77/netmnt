@@ -8,3 +8,4 @@ license.workspace = true
 serde = { workspace = true }
 zvariant = { workspace = true }
 thiserror = { workspace = true }
+gettext-rs = { workspace = true }

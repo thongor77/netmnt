@@ -1,5 +1,7 @@
 [Desktop Entry]
 Type=Service
+Name=netmnt unmount
+Name[fr]=Démontage netmnt
 # Appears on local directories (e.g. a mounted ~/mnt/<share>). The command
 # itself is a no-op with a clear error when the folder is not a netmnt mount.
 MimeType=inode/directory;
@@ -10,5 +12,6 @@ Icon=folder-network
 
 [Desktop Action netmntUnmount]
 Name=Unmount
+Name[fr]=Démonter
 Icon=media-eject
 Exec=netmnt unmount %f

@@ -75,6 +75,7 @@ SSHFS is next. See [`docs/Roadmap.md`](docs/Roadmap.md).
 ```sh
 cargo build            # debug
 make build             # release binaries used by `make install`
+make i18n              # validate and compile the translation catalogs
 ```
 
 ## Install & try it (real mount)
@@ -114,6 +115,16 @@ netmnt mount smb://nas.local/public   # terminal B
 In Dolphin: right-click an `smb://` location → **netmnt → Mount**.
 
 Uninstall: `sudo make uninstall`.
+
+## Localization
+
+English is the source language and fallback. Rust messages use GNU gettext;
+French translations live in `po/fr.po` and are installed under
+`/usr/share/locale`. KDE ServiceMenu and polkit text use the localized fields
+native to those formats.
+
+See [`docs/Localization.md`](docs/Localization.md) for the translation workflow,
+adding a language, catalog updates, and explicit locale testing.
 
 ## Troubleshooting
 

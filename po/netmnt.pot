@@ -1,0 +1,143 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR netmnt contributors
+# This file is distributed under the same license as the netmnt package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: netmnt 0.2.0\n"
+"Report-Msgid-Bugs-To: https://github.com/thongor77/netmnt/issues\n"
+"POT-Creation-Date: 2026-08-08 12:09-0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: crates/netmnt/src/main.rs:32 crates/netmntd/src/exec.rs:53
+#, rust-format
+msgid "Unsupported URL scheme (expected smb:// or nfs://): {url}"
+msgstr ""
+
+#: crates/netmnt/src/main.rs:64
+msgid "Mount network shares from a single click"
+msgstr ""
+
+#: crates/netmnt/src/main.rs:67
+msgid "Mount a share for the current session"
+msgstr ""
+
+#: crates/netmnt/src/main.rs:69
+msgid "Source URL, for example smb://nas.local/share"
+msgstr ""
+
+#: crates/netmnt/src/main.rs:73
+msgid "Keep the mount across reboots using a systemd mount unit"
+msgstr ""
+
+#: crates/netmnt/src/main.rs:77
+msgid "Use an explicit username and prompt for its password"
+msgstr ""
+
+#: crates/netmnt/src/main.rs:81
+msgid "Ask for credentials or reuse credentials stored in KWallet"
+msgstr ""
+
+#: crates/netmnt/src/main.rs:87
+msgid "Unmount a share by its mount point"
+msgstr ""
+
+#: crates/netmnt/src/main.rs:89
+msgid "Absolute path of the mount point"
+msgstr ""
+
+#: crates/netmnt/src/main.rs:146
+#, rust-format
+msgid "Error: {error}"
+msgstr ""
+
+#: crates/netmnt/src/main.rs:148
+msgid "netmnt — failure"
+msgstr ""
+
+#: crates/netmnt/src/main.rs:172
+msgid "HOME is not set"
+msgstr ""
+
+#: crates/netmnt/src/main.rs:220
+#, rust-format
+msgid "Note: could not save credentials to KWallet: {error}"
+msgstr ""
+
+#: crates/netmnt/src/main.rs:228
+#, rust-format
+msgid "Mounted at: {path}"
+msgstr ""
+
+#: crates/netmnt/src/main.rs:236
+#, rust-format
+msgid "Unmounted: {path}"
+msgstr ""
+
+#: crates/netmnt/src/creds.rs:66
+#, rust-format
+msgid "Username for {url}"
+msgstr ""
+
+#: crates/netmnt/src/creds.rs:81
+#, rust-format
+msgid "Password for {username} at {url}"
+msgstr ""
+
+#: crates/netmnt/src/creds.rs:95
+msgid "Remember in KWallet?"
+msgstr ""
+
+#: crates/netmnt/src/creds.rs:141
+msgid "kwallet-query could not save the credentials"
+msgstr ""
+
+#: crates/netmntd/src/main.rs:28
+msgid "Missing caller identity"
+msgstr ""
+
+#: crates/netmntd/src/main.rs:37
+#, rust-format
+msgid "polkit denied action {action}"
+msgstr ""
+
+#: crates/netmntd/src/exec.rs:73
+#, rust-format
+msgid "Could not create mount point {path}: {error}"
+msgstr ""
+
+#: crates/netmntd/src/exec.rs:111
+#, rust-format
+msgid "{program} failed ({status}): {error}"
+msgstr ""
+
+#: crates/netmntd/src/exec.rs:187
+#, rust-format
+msgid "{path} is not mounted"
+msgstr ""
+
+#: crates/netmntd/src/exec.rs:194
+#, rust-format
+msgid "umount failed ({status}): {error}"
+msgstr ""
+
+#: crates/netmntd/src/exec.rs:224
+msgid "The client did not provide a mount point"
+msgstr ""
+
+#: crates/netmntd/src/exec.rs:257
+msgid "systemd-escape could not create the mount unit name"
+msgstr ""
+
+#: crates/netmntd/src/exec.rs:278
+#, rust-format
+msgid "{program} {arguments} failed: {error}"
+msgstr ""
