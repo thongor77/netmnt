@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netmnt 0.2.0\n"
 "Report-Msgid-Bugs-To: https://github.com/thongor77/netmnt/issues\n"
-"POT-Creation-Date: 2026-08-08 12:09-0700\n"
+"POT-Creation-Date: 2026-08-10 17:29-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,24 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+
+#: crates/netmnt/src/creds.rs:66
+#, rust-format
+msgid "Username for {url}"
+msgstr ""
+
+#: crates/netmnt/src/creds.rs:81
+#, rust-format
+msgid "Password for {username} at {url}"
+msgstr ""
+
+#: crates/netmnt/src/creds.rs:95
+msgid "Remember in KWallet?"
+msgstr ""
+
+#: crates/netmnt/src/creds.rs:141
+msgid "kwallet-query could not save the credentials"
+msgstr ""
 
 #: crates/netmnt/src/main.rs:32 crates/netmntd/src/exec.rs:53
 #, rust-format
@@ -82,33 +100,6 @@ msgstr ""
 msgid "Unmounted: {path}"
 msgstr ""
 
-#: crates/netmnt/src/creds.rs:66
-#, rust-format
-msgid "Username for {url}"
-msgstr ""
-
-#: crates/netmnt/src/creds.rs:81
-#, rust-format
-msgid "Password for {username} at {url}"
-msgstr ""
-
-#: crates/netmnt/src/creds.rs:95
-msgid "Remember in KWallet?"
-msgstr ""
-
-#: crates/netmnt/src/creds.rs:141
-msgid "kwallet-query could not save the credentials"
-msgstr ""
-
-#: crates/netmntd/src/main.rs:28
-msgid "Missing caller identity"
-msgstr ""
-
-#: crates/netmntd/src/main.rs:37
-#, rust-format
-msgid "polkit denied action {action}"
-msgstr ""
-
 #: crates/netmntd/src/exec.rs:73
 #, rust-format
 msgid "Could not create mount point {path}: {error}"
@@ -140,4 +131,13 @@ msgstr ""
 #: crates/netmntd/src/exec.rs:278
 #, rust-format
 msgid "{program} {arguments} failed: {error}"
+msgstr ""
+
+#: crates/netmntd/src/main.rs:28
+msgid "Missing caller identity"
+msgstr ""
+
+#: crates/netmntd/src/main.rs:37
+#, rust-format
+msgid "polkit denied action {action}"
 msgstr ""

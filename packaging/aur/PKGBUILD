@@ -23,7 +23,7 @@ prepare() {
 build() {
     cd "$pkgname-$pkgver"
     export RUSTUP_TOOLCHAIN=stable CARGO_TARGET_DIR=target
-    cargo build --frozen --release --all
+    make build PREFIX=/usr
 }
 
 check() {

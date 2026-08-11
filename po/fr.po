@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netmnt 0.2.0\n"
 "Report-Msgid-Bugs-To: https://github.com/thongor77/netmnt/issues\n"
-"POT-Creation-Date: 2026-08-08 12:09-0700\n"
+"POT-Creation-Date: 2026-08-10 17:28-0700\n"
 "PO-Revision-Date: 2026-08-08 12:07-0700\n"
 "Last-Translator: netmnt contributors\n"
 "Language-Team: French\n"
@@ -16,6 +16,24 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: crates/netmnt/src/creds.rs:66
+#, rust-format
+msgid "Username for {url}"
+msgstr "Nom d’utilisateur pour {url}"
+
+#: crates/netmnt/src/creds.rs:81
+#, rust-format
+msgid "Password for {username} at {url}"
+msgstr "Mot de passe de {username} pour {url}"
+
+#: crates/netmnt/src/creds.rs:95
+msgid "Remember in KWallet?"
+msgstr "Mémoriser dans KWallet ?"
+
+#: crates/netmnt/src/creds.rs:141
+msgid "kwallet-query could not save the credentials"
+msgstr "kwallet-query n’a pas pu enregistrer les identifiants"
 
 #: crates/netmnt/src/main.rs:32 crates/netmntd/src/exec.rs:53
 #, rust-format
@@ -84,33 +102,6 @@ msgstr "Monté à l’emplacement : {path}"
 msgid "Unmounted: {path}"
 msgstr "Démonté : {path}"
 
-#: crates/netmnt/src/creds.rs:66
-#, rust-format
-msgid "Username for {url}"
-msgstr "Nom d’utilisateur pour {url}"
-
-#: crates/netmnt/src/creds.rs:81
-#, rust-format
-msgid "Password for {username} at {url}"
-msgstr "Mot de passe de {username} pour {url}"
-
-#: crates/netmnt/src/creds.rs:95
-msgid "Remember in KWallet?"
-msgstr "Mémoriser dans KWallet ?"
-
-#: crates/netmnt/src/creds.rs:141
-msgid "kwallet-query could not save the credentials"
-msgstr "kwallet-query n’a pas pu enregistrer les identifiants"
-
-#: crates/netmntd/src/main.rs:28
-msgid "Missing caller identity"
-msgstr "Identité de l’appelant manquante"
-
-#: crates/netmntd/src/main.rs:37
-#, rust-format
-msgid "polkit denied action {action}"
-msgstr "polkit a refusé l’action {action}"
-
 #: crates/netmntd/src/exec.rs:73
 #, rust-format
 msgid "Could not create mount point {path}: {error}"
@@ -143,3 +134,12 @@ msgstr "systemd-escape n’a pas pu créer le nom de l’unité de montage"
 #, rust-format
 msgid "{program} {arguments} failed: {error}"
 msgstr "Échec de {program} {arguments} : {error}"
+
+#: crates/netmntd/src/main.rs:28
+msgid "Missing caller identity"
+msgstr "Identité de l’appelant manquante"
+
+#: crates/netmntd/src/main.rs:37
+#, rust-format
+msgid "polkit denied action {action}"
+msgstr "polkit a refusé l’action {action}"

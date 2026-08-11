@@ -6,12 +6,16 @@ use gettextrs::LocaleCategory;
 use gettextrs::{bind_textdomain_codeset, bindtextdomain, gettext, setlocale, textdomain};
 
 const DOMAIN: &str = "netmnt";
-const DEFAULT_LOCALE_DIR: &str = "/usr/share/locale";
+const DEFAULT_LOCALE_DIR: &str = match option_env!("NETMNT_DEFAULT_LOCALE_DIR") {
+    Some(locale_dir) => locale_dir,
+    None => "/usr/share/locale",
+};
 
 /// Select the process locale and bind netmnt's gettext catalog.
 ///
 /// `NETMNT_LOCALEDIR` is useful when testing an uninstalled catalog. Installed
-/// builds use the standard system location by default.
+/// builds use the locale directory configured at build time. Direct Cargo builds
+/// fall back to the standard system location.
 pub fn init() {
     setlocale(LocaleCategory::LcAll, "");
     let locale_dir =

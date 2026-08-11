@@ -1,7 +1,7 @@
 # netmnt install/uninstall.
 #
-#   make build            # compile release binaries (run as your user)
-#   sudo make install     # place binaries + system integration files
+#   make build            # compile release binaries + catalogs (run as your user)
+#   sudo make install     # copy previously built artifacts + system integration files
 #   sudo make reload      # refresh systemd and D-Bus so they pick up the new files
 #   sudo make uninstall
 #   make i18n             # validate and compile translation catalogs locally
@@ -20,17 +20,12 @@ LOCALEDIR   = $(DESTDIR)$(PREFIX)/share/locale
 
 LINGUAS = fr
 PACKAGE_VERSION = $(shell sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml)
-RUST_I18N_SOURCES = \
-	crates/netmnt-common/src/i18n.rs \
-	crates/netmnt/src/main.rs \
-	crates/netmnt/src/creds.rs \
-	crates/netmntd/src/main.rs \
-	crates/netmntd/src/exec.rs
+RUST_I18N_SOURCES := $(shell find crates -type f -name '*.rs' -print | LC_ALL=C sort)
 
 .PHONY: build i18n update-translations install reload uninstall clean
 
-build:
-	cargo build --release
+build: i18n
+	NETMNT_DEFAULT_LOCALE_DIR="$(PREFIX)/share/locale" cargo build --release
 
 i18n:
 	@for lang in $(LINGUAS); do \
@@ -50,7 +45,14 @@ update-translations:
 		msgmerge --update --backup=none po/$$lang.po po/netmnt.pot; \
 	done
 
-install: i18n
+install:
+	@for lang in $(LINGUAS); do \
+		if [ ! -f build/locale/$$lang/LC_MESSAGES/netmnt.mo ]; then \
+			echo "Missing compiled catalog: build/locale/$$lang/LC_MESSAGES/netmnt.mo" >&2; \
+			echo "Run 'make build' as your normal user before installing." >&2; \
+			exit 1; \
+		fi; \
+	done
 	install -Dm755 target/release/netmntd      $(BINDIR)/netmntd
 	install -Dm755 target/release/netmnt        $(BINDIR)/netmnt
 	install -Dm644 data/dbus/org.netmnt.conf    $(DBUS_CONF)/org.netmnt.conf

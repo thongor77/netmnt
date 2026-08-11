@@ -12,9 +12,16 @@ netmnt follows the usual Linux/KDE localization mechanisms:
   `message` elements with `xml:lang`.
 
 The compiled MO files are generated below `build/locale`; they are not tracked.
-`make install` compiles and installs them as
-`$PREFIX/share/locale/<language>/LC_MESSAGES/netmnt.mo`. `make uninstall`
+`make build` compiles both the release binaries and those catalogs. Run it as
+your normal user, then run `make install` (usually with `sudo`) to copy the
+already-built artifacts. Installation never compiles catalogs or Rust code.
+Catalogs are installed as
+`$PREFIX/share/locale/<language>/LC_MESSAGES/netmnt.mo`; `make uninstall`
 removes the installed catalogs and `make clean` removes local generated ones.
+
+`make build PREFIX=/opt/netmnt` embeds `/opt/netmnt/share/locale` in the
+binaries, so an installed custom-prefix build finds its catalogs without extra
+environment configuration. `DESTDIR` is staging-only and is not embedded.
 
 ## Updating messages
 
@@ -71,6 +78,9 @@ make i18n
 NETMNT_LOCALEDIR="$PWD/build/locale" LC_ALL=C cargo run -p netmnt -- --help
 NETMNT_LOCALEDIR="$PWD/build/locale" LC_ALL=fr_FR.UTF-8 cargo run -p netmnt -- --help
 ```
+
+`NETMNT_LOCALEDIR` also overrides the configured installed location, which is
+useful for development and test runs.
 
 If the French locale is not generated locally, select French through gettext's
 `LANGUAGE` variable while using any available non-`C` UTF-8 locale, for example

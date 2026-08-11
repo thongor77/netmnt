@@ -7,9 +7,10 @@ the code.
 
 ## Files
 
-- `PKGBUILD` — builds the workspace in release mode and installs via the
-  top-level `Makefile` (`make install DESTDIR=… PREFIX=/usr`), so packaged paths
-  stay in sync with a manual install.
+- `PKGBUILD` — builds release binaries and gettext catalogs with the top-level
+  `Makefile` (`make build PREFIX=/usr`), then uses `make install DESTDIR=…
+  PREFIX=/usr` only to copy them, so packaged paths stay in sync with a manual
+  install.
 - `.SRCINFO` — generated metadata; **must** be regenerated whenever `PKGBUILD`
   changes, or the AUR push is rejected.
 
