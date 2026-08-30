@@ -157,7 +157,18 @@ pub async fn perform_unmount(mount_point: &str) -> anyhow::Result<()> {
     if let Ok(unit_name) = systemd_escape_mount(path).await {
         let unit_path = format!("{UNIT_DIR}/{unit_name}");
         if Path::new(&unit_path).exists() {
-            run("systemctl", &["disable", "--now", &unit_name]).await?;
+            if let Err(stop_err) = run("systemctl", &["stop", &unit_name]).await {
+                // A stale CIFS/NFS handle can make systemd's own umount hang
+                // or fail, same as the plain-mount case below; fall back to a
+                // lazy unmount that detaches without waiting on the remote fs.
+                tracing::warn!(mount_point, %unit_name, error = %stop_err, "systemctl stop failed, retrying with lazy unmount (-l)");
+                try_umount(mount_point, true).await.map_err(|lazy_err| {
+                    anyhow::anyhow!(
+                        "systemctl stop failed: {stop_err}; lazy umount (-l) also failed: {lazy_err}"
+                    )
+                })?;
+            }
+            run("systemctl", &["disable", &unit_name]).await?;
             let base = unit_name.trim_end_matches(".mount");
             let _ = tokio::fs::remove_file(&unit_path).await;
             let _ = tokio::fs::remove_file(format!("{CRED_DIR}/{base}.cred")).await;
