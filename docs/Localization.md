@@ -21,7 +21,10 @@ removes the installed catalogs and `make clean` removes local generated ones.
 
 `make build PREFIX=/opt/netmnt` embeds `/opt/netmnt/share/locale` in the
 binaries, so an installed custom-prefix build finds its catalogs without extra
-environment configuration. `DESTDIR` is staging-only and is not embedded.
+environment configuration. The build records that prefix and `make install`
+rejects a different `PREFIX`, preventing a successful-looking installation
+whose binaries cannot find their catalogs. `DESTDIR` is staging-only and is not
+embedded.
 
 ## Updating messages
 

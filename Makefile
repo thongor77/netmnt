@@ -17,6 +17,7 @@ POLKIT      = $(DESTDIR)$(PREFIX)/share/polkit-1/actions
 SYSTEMD     = $(DESTDIR)$(PREFIX)/lib/systemd/system
 SERVICEMENU = $(DESTDIR)$(PREFIX)/share/kio/servicemenus
 LOCALEDIR   = $(DESTDIR)$(PREFIX)/share/locale
+BUILD_PREFIX_FILE = build/install-prefix
 
 LINGUAS = fr
 PACKAGE_VERSION = $(shell sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml)
@@ -26,6 +27,8 @@ RUST_I18N_SOURCES := $(shell find crates -type f -name '*.rs' -print | LC_ALL=C 
 
 build: i18n
 	NETMNT_DEFAULT_LOCALE_DIR="$(PREFIX)/share/locale" cargo build --release
+	@printf '%s\n' '$(PREFIX)' > $(BUILD_PREFIX_FILE).tmp
+	@mv $(BUILD_PREFIX_FILE).tmp $(BUILD_PREFIX_FILE)
 
 i18n:
 	@for lang in $(LINGUAS); do \
@@ -46,6 +49,17 @@ update-translations:
 	done
 
 install:
+	@if [ ! -f $(BUILD_PREFIX_FILE) ]; then \
+		echo "Missing build metadata: $(BUILD_PREFIX_FILE)" >&2; \
+		echo "Run 'make build PREFIX=$(PREFIX)' as your normal user before installing." >&2; \
+		exit 1; \
+	fi
+	@built_prefix=$$(cat $(BUILD_PREFIX_FILE)); \
+	if [ "$$built_prefix" != "$(PREFIX)" ]; then \
+		echo "PREFIX mismatch: binaries were built for '$$built_prefix', but installation requested '$(PREFIX)'." >&2; \
+		echo "Rebuild with 'make build PREFIX=$(PREFIX)' or install with 'make install PREFIX=$$built_prefix'." >&2; \
+		exit 1; \
+	fi
 	@for lang in $(LINGUAS); do \
 		if [ ! -f build/locale/$$lang/LC_MESSAGES/netmnt.mo ]; then \
 			echo "Missing compiled catalog: build/locale/$$lang/LC_MESSAGES/netmnt.mo" >&2; \
@@ -89,4 +103,4 @@ uninstall:
 	@echo "Removed."
 
 clean:
-	rm -rf build/locale
+	rm -rf build/locale build/install-prefix build/install-prefix.tmp
