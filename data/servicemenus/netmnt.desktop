@@ -1,5 +1,6 @@
 [Desktop Entry]
 Type=Service
+Name=netmnt
 # Show only on remote/network locations browsed in Dolphin.
 MimeType=inode/directory;
 X-KDE-Protocols=smb,nfs,ftp,sftp
@@ -10,16 +11,19 @@ Icon=folder-network
 
 [Desktop Action netmntMount]
 Name=Mount
+Name[fr]=Monter
 Icon=media-mount
 Exec=netmnt mount %u
 
 [Desktop Action netmntMountAs]
 Name=Mount as…
+Name[fr]=Monter en tant que…
 Icon=dialog-password
 Exec=netmnt mount --ask %u
 
 [Desktop Action netmntMountPersistent]
 Name=Mount (persistent)
+Name[fr]=Monter (persistant)
 Icon=pin
 # --ask so an authenticated share gets credentials (KWallet, then a prompt);
 # guest shares still work if the user leaves the prompt empty / cancels.

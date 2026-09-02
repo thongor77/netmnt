@@ -10,6 +10,7 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 use std::process::Stdio;
 
+use netmnt_common::i18n::{tr, tr_args};
 use netmnt_common::{nfs, smb, MountRequest, MountResult};
 use tokio::process::Command;
 
@@ -48,7 +49,11 @@ fn resolve_target(url: &str) -> anyhow::Result<Target> {
             supports_credentials: false,
         });
     }
-    anyhow::bail!("unsupported URL scheme (expected smb:// or nfs://): {url}");
+    let message = tr_args(
+        "Unsupported URL scheme (expected smb:// or nfs://): {url}",
+        &[("url", url)],
+    );
+    anyhow::bail!(message);
 }
 
 /// Mount the share for the current session via `mount.cifs`/`mount.nfs`.
@@ -64,7 +69,14 @@ pub async fn perform_mount(request: &MountRequest) -> anyhow::Result<MountResult
     }
 
     tokio::fs::create_dir_all(mount_point).await.map_err(|e| {
-        anyhow::anyhow!("cannot create mount point {}: {e}", mount_point.display())
+        let message = tr_args(
+            "Could not create mount point {path}: {error}",
+            &[
+                ("path", &mount_point.display().to_string()),
+                ("error", &e.to_string()),
+            ],
+        );
+        anyhow::anyhow!(message)
     })?;
 
     let mut options = vec!["rw".to_string()];
@@ -95,12 +107,15 @@ pub async fn perform_mount(request: &MountRequest) -> anyhow::Result<MountResult
     let output = cmd.output().await?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
-        anyhow::bail!(
-            "{} failed ({}): {}",
-            target.mount_program,
-            output.status,
-            stderr.trim()
+        let message = tr_args(
+            "{program} failed ({status}): {error}",
+            &[
+                ("program", target.mount_program),
+                ("status", &output.status.to_string()),
+                ("error", stderr.trim()),
+            ],
         );
+        anyhow::bail!(message);
     }
 
     Ok(mounted(mount_point, false))
@@ -180,7 +195,8 @@ pub async fn perform_unmount(mount_point: &str) -> anyhow::Result<()> {
     }
 
     if !is_mountpoint(path).await {
-        anyhow::bail!("{mount_point} is not mounted");
+        let message = tr_args("{path} is not mounted", &[("path", mount_point)]);
+        anyhow::bail!(message);
     }
     if let Err(first_err) = try_umount(mount_point, false).await {
         // A stale NFS/CIFS handle (server dropped the session while the mount
@@ -188,15 +204,15 @@ pub async fn perform_unmount(mount_point: &str) -> anyhow::Result<()> {
         // mount from the namespace immediately and cleans up once the last
         // reference is released, without needing the remote fs to respond.
         tracing::warn!(mount_point, error = %first_err, "umount failed, retrying with lazy unmount (-l)");
-        try_umount(mount_point, true)
-            .await
-            .map_err(|lazy_err| anyhow::anyhow!("umount failed: {first_err}; lazy umount (-l) also failed: {lazy_err}"))?;
+        try_umount(mount_point, true).await.map_err(|lazy_err| {
+            anyhow::anyhow!("umount failed: {first_err}; lazy umount (-l) also failed: {lazy_err}")
+        })?;
     }
     remove_empty_mount_point(path).await;
     Ok(())
 }
 
-/// Run `umount [-l] mount_point`, returning the trimmed stderr as the error on failure.
+/// Run `umount [-l] mount_point`, returning a localized diagnostic on failure.
 async fn try_umount(mount_point: &str, lazy: bool) -> anyhow::Result<()> {
     let mut cmd = Command::new("umount");
     if lazy {
@@ -204,7 +220,14 @@ async fn try_umount(mount_point: &str, lazy: bool) -> anyhow::Result<()> {
     }
     let output = cmd.arg(mount_point).output().await?;
     if !output.status.success() {
-        anyhow::bail!("{}", String::from_utf8_lossy(&output.stderr).trim());
+        let message = tr_args(
+            "umount failed ({status}): {error}",
+            &[
+                ("status", &output.status.to_string()),
+                ("error", String::from_utf8_lossy(&output.stderr).trim()),
+            ],
+        );
+        anyhow::bail!(message);
     }
     Ok(())
 }
@@ -227,7 +250,8 @@ async fn remove_empty_mount_point(path: &Path) {
 
 fn mount_point_of(request: &MountRequest) -> anyhow::Result<&Path> {
     if request.mount_point.is_empty() {
-        anyhow::bail!("mount_point must be provided by the client");
+        let message = tr("The client did not provide a mount point");
+        anyhow::bail!(message);
     }
     Ok(Path::new(&request.mount_point))
 }
@@ -281,7 +305,9 @@ fn unescape_mountinfo(s: &str) -> String {
     while i < bytes.len() {
         if bytes[i] == b'\\'
             && i + 3 < bytes.len()
-            && bytes[i + 1..i + 4].iter().all(|b| b.is_ascii_digit() && *b < b'8')
+            && bytes[i + 1..i + 4]
+                .iter()
+                .all(|b| b.is_ascii_digit() && *b < b'8')
         {
             let octal = std::str::from_utf8(&bytes[i + 1..i + 4]).unwrap();
             out.push(u8::from_str_radix(octal, 8).unwrap());
@@ -303,7 +329,8 @@ async fn systemd_escape_mount(path: &Path) -> anyhow::Result<String> {
         .output()
         .await?;
     if !out.status.success() {
-        anyhow::bail!("systemd-escape failed");
+        let message = tr("systemd-escape could not create the mount unit name");
+        anyhow::bail!(message);
     }
     Ok(String::from_utf8_lossy(&out.stdout).trim().to_string())
 }
@@ -322,11 +349,15 @@ async fn write_credentials(path: &str, username: &str, password: &str) -> anyhow
 async fn run(program: &str, args: &[&str]) -> anyhow::Result<()> {
     let out = Command::new(program).args(args).output().await?;
     if !out.status.success() {
-        anyhow::bail!(
-            "{program} {} failed: {}",
-            args.join(" "),
-            String::from_utf8_lossy(&out.stderr).trim()
+        let message = tr_args(
+            "{program} {arguments} failed: {error}",
+            &[
+                ("program", program),
+                ("arguments", &args.join(" ")),
+                ("error", String::from_utf8_lossy(&out.stderr).trim()),
+            ],
         );
+        anyhow::bail!(message);
     }
     Ok(())
 }
@@ -356,7 +387,8 @@ mod tests {
 
     #[test]
     fn mountinfo_lookup_matches_exact_path() {
-        let sample = "36 35 0:32 / /home/u/mnt/isos rw,relatime shared:1 - cifs //lab1.local/isos rw\n";
+        let sample =
+            "36 35 0:32 / /home/u/mnt/isos rw,relatime shared:1 - cifs //lab1.local/isos rw\n";
         assert!(mountinfo_contains(sample, "/home/u/mnt/isos"));
         assert!(!mountinfo_contains(sample, "/home/u/mnt/other"));
     }

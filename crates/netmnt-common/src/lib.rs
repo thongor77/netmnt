@@ -8,6 +8,7 @@
 use serde::{Deserialize, Serialize};
 use zvariant::Type;
 
+pub mod i18n;
 pub mod nfs;
 pub mod smb;
 

@@ -7,6 +7,7 @@
 mod exec;
 mod polkit;
 
+use netmnt_common::i18n::{self, tr, tr_args};
 use netmnt_common::{MountRequest, MountResult, BUS_NAME, OBJECT_PATH};
 use zbus::interface;
 use zbus::message::Header;
@@ -24,7 +25,7 @@ async fn authorize(
 ) -> zbus::fdo::Result<()> {
     let sender = header
         .sender()
-        .ok_or_else(|| zbus::fdo::Error::AccessDenied("missing caller identity".into()))?;
+        .ok_or_else(|| zbus::fdo::Error::AccessDenied(tr("Missing caller identity")))?;
 
     let authorized = polkit::is_authorized(conn, sender.as_str(), action)
         .await
@@ -32,8 +33,9 @@ async fn authorize(
 
     if !authorized {
         tracing::warn!(%action, "polkit denied authorization");
-        return Err(zbus::fdo::Error::AccessDenied(format!(
-            "polkit denied action {action}"
+        return Err(zbus::fdo::Error::AccessDenied(tr_args(
+            "polkit denied action {action}",
+            &[("action", action)],
         )));
     }
     Ok(())
@@ -93,10 +95,10 @@ impl Manager {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    i18n::init();
     tracing_subscriber::fmt()
         .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
         .init();
 

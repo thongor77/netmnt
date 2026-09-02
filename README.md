@@ -72,9 +72,13 @@ SSHFS is next. See [`docs/Roadmap.md`](docs/Roadmap.md).
 
 ## Build
 
+Prerequisites: a Rust toolchain and GNU gettext development tools (`xgettext`,
+`msgmerge`, and `msgfmt`).
+
 ```sh
 cargo build            # debug
-make build             # release binaries used by `make install`
+make build             # release binaries and translation catalogs used by `make install`
+make i18n              # validate and compile only the translation catalogs
 ```
 
 ## Install & try it (real mount)
@@ -83,8 +87,8 @@ make build             # release binaries used by `make install`
 > authenticated shares work too via `--ask` (see below).
 
 ```sh
-make build             # as your user
-sudo make install      # binaries + D-Bus/polkit/systemd/servicemenu files
+make build             # as your user; builds binaries and translation catalogs
+sudo make install      # copies those artifacts + D-Bus/polkit/systemd/servicemenu files
 sudo make reload       # refresh systemd + D-Bus
 
 # CLI test (the daemon is D-Bus activated on first call):
@@ -114,6 +118,16 @@ netmnt mount smb://nas.local/public   # terminal B
 In Dolphin: right-click an `smb://` location → **netmnt → Mount**.
 
 Uninstall: `sudo make uninstall`.
+
+## Localization
+
+English is the source language and fallback. Rust messages use GNU gettext;
+French translations live in `po/fr.po` and are installed under
+`$PREFIX/share/locale` (by default, `/usr/share/locale`). KDE ServiceMenu and
+polkit text use the localized fields native to those formats.
+
+See [`docs/Localization.md`](docs/Localization.md) for the translation workflow,
+adding a language, catalog updates, and explicit locale testing.
 
 ## Troubleshooting
 

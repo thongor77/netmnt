@@ -7,9 +7,11 @@ the code.
 
 ## Files
 
-- `PKGBUILD` — builds the workspace in release mode and installs via the
-  top-level `Makefile` (`make install DESTDIR=… PREFIX=/usr`), so packaged paths
-  stay in sync with a manual install.
+- `PKGBUILD` — builds gettext catalogs with the top-level `Makefile`, builds all
+  Cargo workspace members in frozen mode with `/usr/share/locale` embedded,
+  then uses `make install DESTDIR=… PREFIX=/usr` only to copy the artifacts.
+  Between releases, the source and checksum may pin an exact post-release
+  commit with an Arch-style snapshot version such as `0.2.0.r3.ge1c29a0`.
 - `.SRCINFO` — generated metadata; **must** be regenerated whenever `PKGBUILD`
   changes, or the AUR push is rejected.
 

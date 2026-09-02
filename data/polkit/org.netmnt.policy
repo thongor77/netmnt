@@ -7,7 +7,9 @@
 
   <action id="org.netmnt.mount">
     <description>Mount a network share</description>
+    <description xml:lang="fr">Monter un partage réseau</description>
     <message>Authentication is required to mount a network share</message>
+    <message xml:lang="fr">Une authentification est requise pour monter un partage réseau</message>
     <defaults>
       <allow_any>auth_admin</allow_any>
       <allow_inactive>auth_admin</allow_inactive>
@@ -19,7 +21,9 @@
 
   <action id="org.netmnt.mount-persistent">
     <description>Create a persistent network mount</description>
+    <description xml:lang="fr">Créer un montage réseau persistant</description>
     <message>Authentication is required to create a persistent network mount</message>
+    <message xml:lang="fr">Une authentification est requise pour créer un montage réseau persistant</message>
     <defaults>
       <allow_any>auth_admin</allow_any>
       <allow_inactive>auth_admin</allow_inactive>
@@ -29,7 +33,9 @@
 
   <action id="org.netmnt.unmount">
     <description>Unmount a network share</description>
+    <description xml:lang="fr">Démonter un partage réseau</description>
     <message>Authentication is required to unmount a network share</message>
+    <message xml:lang="fr">Une authentification est requise pour démonter un partage réseau</message>
     <defaults>
       <allow_any>auth_admin</allow_any>
       <allow_inactive>auth_admin</allow_inactive>

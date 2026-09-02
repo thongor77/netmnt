@@ -7,6 +7,8 @@
 use std::io::Write;
 use std::process::{Command, Stdio};
 
+use netmnt_common::i18n::{tr, tr_args};
+
 /// KWallet folder under which netmnt stores its entries.
 const WALLET_FOLDER: &str = "netmnt";
 
@@ -61,17 +63,13 @@ fn wallet_name() -> String {
 }
 
 fn prompt_username(url: &str) -> anyhow::Result<String> {
+    let prompt = tr_args("Username for {url}", &[("url", url)]);
     if gui_available() {
-        if let Some(out) = kdialog(&[
-            "--title",
-            "netmnt",
-            "--inputbox",
-            &format!("Nom d'utilisateur pour {url}"),
-        ]) {
+        if let Some(out) = kdialog(&["--title", "netmnt", "--inputbox", &prompt]) {
             return Ok(out);
         }
     }
-    eprint!("Nom d'utilisateur pour {url} : ");
+    eprint!("{prompt}: ");
     std::io::stderr().flush().ok();
     let mut line = String::new();
     std::io::stdin().read_line(&mut line)?;
@@ -79,25 +77,22 @@ fn prompt_username(url: &str) -> anyhow::Result<String> {
 }
 
 fn prompt_password(url: &str, user: &str) -> anyhow::Result<String> {
+    let prompt = tr_args(
+        "Password for {username} at {url}",
+        &[("username", user), ("url", url)],
+    );
     if gui_available() {
-        if let Some(out) = kdialog(&[
-            "--title",
-            "netmnt",
-            "--password",
-            &format!("Mot de passe pour {user}@{url}"),
-        ]) {
+        if let Some(out) = kdialog(&["--title", "netmnt", "--password", &prompt]) {
             return Ok(out);
         }
     }
-    Ok(rpassword::prompt_password(format!(
-        "Mot de passe pour {user}@{url} : "
-    ))?)
+    Ok(rpassword::prompt_password(format!("{prompt}: "))?)
 }
 
 fn ask_remember() -> bool {
     if gui_available() {
         return Command::new("kdialog")
-            .args(["--title", "netmnt", "--yesno", "Mémoriser dans KWallet ?"])
+            .args(["--title", "netmnt", "--yesno", &tr("Remember in KWallet?")])
             .status()
             .map(|s| s.success())
             .unwrap_or(false);
@@ -143,7 +138,8 @@ pub fn kwallet_write(key: &str, username: &str, password: &str) -> anyhow::Resul
         write!(stdin, "{username}\n{password}")?;
     }
     if !child.wait()?.success() {
-        anyhow::bail!("kwallet-query write failed");
+        let message = tr("kwallet-query could not save the credentials");
+        anyhow::bail!(message);
     }
     Ok(())
 }
