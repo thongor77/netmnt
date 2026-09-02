@@ -172,7 +172,18 @@ pub async fn perform_unmount(mount_point: &str) -> anyhow::Result<()> {
     if let Ok(unit_name) = systemd_escape_mount(path).await {
         let unit_path = format!("{UNIT_DIR}/{unit_name}");
         if Path::new(&unit_path).exists() {
-            run("systemctl", &["disable", "--now", &unit_name]).await?;
+            if let Err(stop_err) = run("systemctl", &["stop", &unit_name]).await {
+                // A stale CIFS/NFS handle can make systemd's own umount hang
+                // or fail, same as the plain-mount case below; fall back to a
+                // lazy unmount that detaches without waiting on the remote fs.
+                tracing::warn!(mount_point, %unit_name, error = %stop_err, "systemctl stop failed, retrying with lazy unmount (-l)");
+                try_umount(mount_point, true).await.map_err(|lazy_err| {
+                    anyhow::anyhow!(
+                        "systemctl stop failed: {stop_err}; lazy umount (-l) also failed: {lazy_err}"
+                    )
+                })?;
+            }
+            run("systemctl", &["disable", &unit_name]).await?;
             let base = unit_name.trim_end_matches(".mount");
             let _ = tokio::fs::remove_file(&unit_path).await;
             let _ = tokio::fs::remove_file(format!("{CRED_DIR}/{base}.cred")).await;
@@ -187,19 +198,37 @@ pub async fn perform_unmount(mount_point: &str) -> anyhow::Result<()> {
         let message = tr_args("{path} is not mounted", &[("path", mount_point)]);
         anyhow::bail!(message);
     }
-    let output = Command::new("umount").arg(mount_point).output().await?;
+    if let Err(first_err) = try_umount(mount_point, false).await {
+        // A stale NFS/CIFS handle (server dropped the session while the mount
+        // was still active) can leave a plain umount stuck; -l detaches the
+        // mount from the namespace immediately and cleans up once the last
+        // reference is released, without needing the remote fs to respond.
+        tracing::warn!(mount_point, error = %first_err, "umount failed, retrying with lazy unmount (-l)");
+        try_umount(mount_point, true).await.map_err(|lazy_err| {
+            anyhow::anyhow!("umount failed: {first_err}; lazy umount (-l) also failed: {lazy_err}")
+        })?;
+    }
+    remove_empty_mount_point(path).await;
+    Ok(())
+}
+
+/// Run `umount [-l] mount_point`, returning a localized diagnostic on failure.
+async fn try_umount(mount_point: &str, lazy: bool) -> anyhow::Result<()> {
+    let mut cmd = Command::new("umount");
+    if lazy {
+        cmd.arg("-l");
+    }
+    let output = cmd.arg(mount_point).output().await?;
     if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
         let message = tr_args(
             "umount failed ({status}): {error}",
             &[
                 ("status", &output.status.to_string()),
-                ("error", stderr.trim()),
+                ("error", String::from_utf8_lossy(&output.stderr).trim()),
             ],
         );
         anyhow::bail!(message);
     }
-    remove_empty_mount_point(path).await;
     Ok(())
 }
 
@@ -235,14 +264,60 @@ fn mounted(mount_point: &Path, persisted: bool) -> MountResult {
 }
 
 /// Return true if `path` is currently a mount point.
+///
+/// Reads `/proc/self/mountinfo` (kernel-provided, no syscall on the mounted
+/// fs itself) instead of `stat()`-ing the path via `mountpoint -q`. A stale
+/// CIFS/NFS handle (server dropped the session while the mount was still
+/// active) makes `stat()` fail with `ESTALE`, which made the old check
+/// wrongly report "not mounted" for a mount the kernel still has active.
 async fn is_mountpoint(path: &Path) -> bool {
-    Command::new("mountpoint")
-        .arg("-q")
-        .arg(path)
-        .status()
-        .await
-        .map(|s| s.success())
-        .unwrap_or(false)
+    let target = normalize_mount_point(path);
+    match tokio::fs::read_to_string("/proc/self/mountinfo").await {
+        Ok(mountinfo) => mountinfo_contains(&mountinfo, &target),
+        Err(_) => false,
+    }
+}
+
+fn normalize_mount_point(path: &Path) -> String {
+    let s = path.to_string_lossy();
+    if s.len() > 1 {
+        s.trim_end_matches('/').to_string()
+    } else {
+        s.into_owned()
+    }
+}
+
+/// Check whether any line of `/proc/self/mountinfo` has `target` as its mount
+/// point (field 5; fields 1-6 are fixed-position before the optional fields).
+fn mountinfo_contains(mountinfo: &str, target: &str) -> bool {
+    mountinfo
+        .lines()
+        .filter_map(|line| line.split(' ').nth(4))
+        .any(|raw_mount_point| unescape_mountinfo(raw_mount_point) == target)
+}
+
+/// Undo the octal `\NNN` escaping (e.g. `\040` for space) that the kernel
+/// applies to whitespace/backslash in `/proc/self/mountinfo` paths.
+fn unescape_mountinfo(s: &str) -> String {
+    let bytes = s.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'\\'
+            && i + 3 < bytes.len()
+            && bytes[i + 1..i + 4]
+                .iter()
+                .all(|b| b.is_ascii_digit() && *b < b'8')
+        {
+            let octal = std::str::from_utf8(&bytes[i + 1..i + 4]).unwrap();
+            out.push(u8::from_str_radix(octal, 8).unwrap());
+            i += 4;
+        } else {
+            out.push(bytes[i]);
+            i += 1;
+        }
+    }
+    String::from_utf8_lossy(&out).into_owned()
 }
 
 /// Compute the systemd unit name (`home-user-mnt-isos.mount`) for a mount point.
@@ -308,7 +383,35 @@ fn mount_unit(fs_type: &str, what: &str, where_: &str, options: &str) -> String 
 
 #[cfg(test)]
 mod tests {
-    use super::mount_unit;
+    use super::{mount_unit, mountinfo_contains, unescape_mountinfo};
+
+    #[test]
+    fn mountinfo_lookup_matches_exact_path() {
+        let sample =
+            "36 35 0:32 / /home/u/mnt/isos rw,relatime shared:1 - cifs //lab1.local/isos rw\n";
+        assert!(mountinfo_contains(sample, "/home/u/mnt/isos"));
+        assert!(!mountinfo_contains(sample, "/home/u/mnt/other"));
+    }
+
+    #[test]
+    fn mountinfo_lookup_survives_extra_optional_fields() {
+        // Real mountinfo lines can carry extra "tag:value" optional fields
+        // before the "-" separator; field 5 (mount point) is still fixed-position.
+        let sample = "42 24 0:38 / /home/u/mnt/testing rw,relatime shared:1 master:2 - nfs4 192.168.1.64:/vol rw\n";
+        assert!(mountinfo_contains(sample, "/home/u/mnt/testing"));
+    }
+
+    #[test]
+    fn mountinfo_lookup_unescapes_octal_sequences() {
+        let sample =
+            "36 35 0:32 / /home/u/mnt/My\\040Share rw,relatime shared:1 - cifs //lab1.local/share rw\n";
+        assert!(mountinfo_contains(sample, "/home/u/mnt/My Share"));
+    }
+
+    #[test]
+    fn unescape_mountinfo_leaves_plain_paths_untouched() {
+        assert_eq!(unescape_mountinfo("/home/u/mnt/isos"), "/home/u/mnt/isos");
+    }
 
     #[test]
     fn renders_mount_unit() {
