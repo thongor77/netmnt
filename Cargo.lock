@@ -486,7 +486,7 @@ dependencies = [
 
 [[package]]
 name = "netmnt"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -501,7 +501,7 @@ dependencies = [
 
 [[package]]
 name = "netmnt-common"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "gettext-rs",
  "serde",
@@ -511,7 +511,7 @@ dependencies = [
 
 [[package]]
 name = "netmntd"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "netmnt-common",
