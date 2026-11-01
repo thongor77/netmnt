@@ -33,7 +33,11 @@ validé après reboot ; NFS testé en réel sur un export Synology
   `enable --now` ; credentials dans `/etc/netmnt/*.cred` (root, 0600). Garde
   l'auth admin polkit. **Validé : survit au reboot** (remonté au boot par systemd).
 - **Unmount** : par point de montage ; démantèle l'unit systemd si persistant.
-  Entrée Dolphin **netmnt → Unmount**. Accepte chemin nu ou URL `file://`.
+  Entrée Dolphin **netmnt → Unmount**, sur le dossier `~/mnt/<share>` et à côté
+  de **Mount** sur la location distante. Accepte chemin nu, URL `file://`, ou URL
+  `smb://`/`nfs://` (résolue vers `~/mnt/<share>`, comme au montage). Toujours
+  affichée (pas de condition « monté » dans les ServiceMenus) ; si rien n'est
+  monté, le daemon répond « … is not mounted » (notification).
 - **Ownership** : montages SMB possédés par l'utilisateur (`uid=`/`gid=` envoyés
   par le client). **Validé après reboot** : montage possédé par l'utilisateur
   appelant, lecture/écriture OK.
@@ -48,8 +52,9 @@ Build/clippy clean, ~20 tests unitaires. Détail et suite : `docs/Roadmap.md`.
 
 ### Points ouverts / gotchas
 - **Démonter depuis la vue principale, pas depuis la sidebar.** L'entrée
-  **netmnt → Unmount** n'apparaît que sur le clic-droit d'un **dossier dans la
-  vue fichiers** (`~/mnt/<share>`) : c'est là que KDE applique les ServiceMenus.
+  **netmnt → Unmount** n'apparaît que dans la **vue fichiers** (dossier
+  `~/mnt/<share>` ou location distante `smb://`/`nfs://`) : c'est là que KDE
+  applique les ServiceMenus.
   Le **panneau Emplacements** (sidebar, section « Remote ») n'expose que l'« Unmount »
   natif de Solid (umount en tant qu'utilisateur → « must be superuser »), et son
   menu **n'est pas extensible** par ServiceMenu — impossible d'y ajouter netmnt.

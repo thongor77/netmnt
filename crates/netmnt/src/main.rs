@@ -5,7 +5,7 @@
 
 mod creds;
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use clap::{CommandFactory, FromArgMatches, Parser, Subcommand};
 use netmnt_common::i18n::{self, tr, tr_args};
@@ -55,7 +55,7 @@ enum Command {
         ask: bool,
     },
     Unmount {
-        mount_point: String,
+        target: String,
     },
 }
 
@@ -84,9 +84,11 @@ fn localized_cli_command() -> clap::Command {
         })
         .mut_subcommand("unmount", |command| {
             command
-                .about(tr("Unmount a share by its mount point"))
-                .mut_arg("mount_point", |arg| {
-                    arg.help(tr("Absolute path of the mount point"))
+                .about(tr("Unmount a share by its mount point or URL"))
+                .mut_arg("target", |arg| {
+                    arg.help(tr(
+                        "Absolute path of the mount point, or the smb:// or nfs:// URL of the share",
+                    ))
                 })
         })
 }
@@ -99,6 +101,27 @@ fn localized_cli_command() -> clap::Command {
 trait Manager {
     async fn mount(&self, request: MountRequest) -> zbus::Result<MountResult>;
     async fn unmount(&self, mount_point: String) -> zbus::Result<()>;
+}
+
+/// Default mount point of a share under `base` (`~/mnt/<share>`). Mount and
+/// URL-based unmount both use it, so they always agree on the path.
+fn default_mount_point(base: &Path, target: &Target) -> String {
+    match target {
+        Target::Smb(t) => smb::default_mount_point(base, &t.share),
+        Target::Nfs(t) => nfs::default_mount_point(base, &t.export),
+    }
+    .to_string_lossy()
+    .into_owned()
+}
+
+/// Resolve the `unmount` argument to a mount point. The Dolphin "Unmount"
+/// action on a remote location passes the share URL (`smb://`, `nfs://`),
+/// which maps to its default mount point; anything else is a local path.
+fn resolve_unmount_target(input: &str, base: &Path) -> anyhow::Result<String> {
+    if input.contains("://") && !input.starts_with("file://") {
+        return Ok(default_mount_point(base, &parse_url(input)?));
+    }
+    Ok(normalize_local_path(input))
 }
 
 /// Turn a file-manager argument (a bare path or a `file://` URL) into a plain
@@ -132,6 +155,16 @@ fn notify(summary: &str, body: &str, error: bool) {
         .status();
 }
 
+/// User-facing text of an error. A daemon failure arrives as a D-Bus method
+/// error whose Display adds the error name (`org.freedesktop.DBus.Error.Failed:`);
+/// show only the daemon's own message.
+fn error_text(error: &anyhow::Error) -> String {
+    match error.downcast_ref::<zbus::Error>() {
+        Some(zbus::Error::MethodError(_, Some(description), _)) => description.clone(),
+        _ => error.to_string(),
+    }
+}
+
 #[tokio::main]
 async fn main() {
     i18n::init();
@@ -143,12 +176,20 @@ async fn main() {
             notify("netmnt", &message, false);
         }
         Err(e) => {
-            let message = tr_args("Error: {error}", &[("error", &e.to_string())]);
+            let error = error_text(&e);
+            let message = tr_args("Error: {error}", &[("error", &error)]);
             eprintln!("{message}");
-            notify(&tr("netmnt — failure"), &e.to_string(), true);
+            notify(&tr("netmnt — failure"), &error, true);
             std::process::exit(1);
         }
     }
+}
+
+/// Base directory for default mount points: `$HOME/mnt`.
+fn mount_base() -> anyhow::Result<PathBuf> {
+    let home_error = tr("HOME is not set");
+    let home = std::env::var("HOME").map_err(|_| anyhow::anyhow!(home_error))?;
+    Ok(PathBuf::from(home).join("mnt"))
 }
 
 /// Run the requested command, returning a human-readable success message.
@@ -169,15 +210,7 @@ async fn run(cli: Cli) -> anyhow::Result<String> {
             // The client runs as the user, so it resolves a default mount point
             // under $HOME/mnt and hands the absolute path to the daemon.
             let target = parse_url(&url)?;
-            let home_error = tr("HOME is not set");
-            let home = std::env::var("HOME").map_err(|_| anyhow::anyhow!(home_error))?;
-            let base = PathBuf::from(home).join("mnt");
-            let mount_point = match &target {
-                Target::Smb(t) => smb::default_mount_point(&base, &t.share),
-                Target::Nfs(t) => nfs::default_mount_point(&base, &t.export),
-            }
-            .to_string_lossy()
-            .into_owned();
+            let mount_point = default_mount_point(&mount_base()?, &target);
 
             // Gather credentials only for SMB "mount as" (--ask) or an explicit
             // user; a plain mount stays a guest mount. NFS has no
@@ -229,9 +262,11 @@ async fn run(cli: Cli) -> anyhow::Result<String> {
                 &[("path", &result.mount_point)],
             ))
         }
-        Command::Unmount { mount_point } => {
-            // Dolphin's %f may hand us a file:// URL with percent-escapes.
-            let path = normalize_local_path(&mount_point);
+        Command::Unmount { target } => {
+            // Dolphin hands us a share URL (%u on a remote location) or a
+            // local path / file:// URL with percent-escapes (%f on ~/mnt/<share>).
+            // A share that is not mounted is reported by the daemon.
+            let path = resolve_unmount_target(&target, &mount_base()?)?;
             manager.unmount(path.clone()).await?;
             Ok(tr_args("Unmounted: {path}", &[("path", &path)]))
         }
@@ -240,7 +275,9 @@ async fn run(cli: Cli) -> anyhow::Result<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::normalize_local_path;
+    use std::path::Path;
+
+    use super::{normalize_local_path, resolve_unmount_target};
 
     #[test]
     fn normalizes_bare_path() {
@@ -253,5 +290,36 @@ mod tests {
             normalize_local_path("file:///home/u/mnt/TV%20Shows/"),
             "/home/u/mnt/TV Shows"
         );
+    }
+
+    #[test]
+    fn unmount_resolves_share_urls_to_default_mount_point() {
+        let base = Path::new("/home/u/mnt");
+        assert_eq!(
+            resolve_unmount_target("smb://lab1.local/isos/sub/dir", base).unwrap(),
+            "/home/u/mnt/isos"
+        );
+        assert_eq!(
+            resolve_unmount_target("nfs://192.168.1.64/volume1/testing", base).unwrap(),
+            "/home/u/mnt/testing"
+        );
+    }
+
+    #[test]
+    fn unmount_keeps_local_paths() {
+        let base = Path::new("/home/u/mnt");
+        assert_eq!(
+            resolve_unmount_target("file:///home/u/mnt/TV%20Shows/", base).unwrap(),
+            "/home/u/mnt/TV Shows"
+        );
+        assert_eq!(
+            resolve_unmount_target("/home/u/mnt/isos", base).unwrap(),
+            "/home/u/mnt/isos"
+        );
+    }
+
+    #[test]
+    fn unmount_rejects_unsupported_schemes() {
+        assert!(resolve_unmount_target("sftp://host/dir", Path::new("/home/u/mnt")).is_err());
     }
 }

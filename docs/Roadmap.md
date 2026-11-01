@@ -62,6 +62,9 @@ But : lever les risques avant de figer l'implémentation (cf. Architecture.md).
 - [x] `Makefile` d'installation (binaires + dbus/polkit/systemd/servicemenu + unmount)
 - [x] Entrée Dolphin **Unmount** (vue fichiers ; no-op clair sur un dossier non
       monté). Pas dispo dans la sidebar Emplacements (menu non extensible KDE).
+- [x] **Unmount** aussi dans le sous-menu netmnt d'une location distante, à côté
+      de Mount : `netmnt unmount smb://…`/`nfs://…` résout `~/mnt/<share>`.
+      Toujours affichée ; « … is not mounted » notifié si rien n'est monté.
 - [x] Icônes et libellés du servicemenu finalisés — `drive-network` n'existait
       dans aucun thème installé (fallback générique identique partout, visible
       sur `Screenshot/icones.png`) ; remplacé par `folder-network` (sous-menu),

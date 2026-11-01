@@ -21,7 +21,7 @@ chemin stable » pilotée par un service.
 | Mount                 | clic-droit → Mount    | montage session à un chemin stable                  |
 | Mount as…             | clic-droit → Mount as | idem avec username/password explicites              |
 | Mount (persistent)    | clic-droit → Mount…   | unit systemd `.mount` générée, survit au reboot     |
-| Unmount               | (futur)               | démontage par point de montage                      |
+| Unmount               | clic-droit → Unmount  | démontage par point de montage ou URL du partage    |
 
 ## Vue d'ensemble
 
