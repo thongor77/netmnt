@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: netmnt 0.2.0\n"
 "Report-Msgid-Bugs-To: https://github.com/thongor77/netmnt/issues\n"
-"POT-Creation-Date: 2026-08-10 17:28-0700\n"
+"POT-Creation-Date: 2026-09-02 04:49+0300\n"
 "PO-Revision-Date: 2026-08-08 12:07-0700\n"
 "Last-Translator: netmnt contributors\n"
 "Language-Team: French\n"
@@ -112,25 +112,25 @@ msgstr "Impossible de créer le point de montage {path} : {error}"
 msgid "{program} failed ({status}): {error}"
 msgstr "Échec de {program} ({status}) : {error}"
 
-#: crates/netmntd/src/exec.rs:187
+#: crates/netmntd/src/exec.rs:198
 #, rust-format
 msgid "{path} is not mounted"
 msgstr "{path} n’est pas monté"
 
-#: crates/netmntd/src/exec.rs:194
+#: crates/netmntd/src/exec.rs:224
 #, rust-format
 msgid "umount failed ({status}): {error}"
 msgstr "Échec d’umount ({status}) : {error}"
 
-#: crates/netmntd/src/exec.rs:224
+#: crates/netmntd/src/exec.rs:253
 msgid "The client did not provide a mount point"
 msgstr "Le client n’a pas fourni de point de montage"
 
-#: crates/netmntd/src/exec.rs:257
+#: crates/netmntd/src/exec.rs:332
 msgid "systemd-escape could not create the mount unit name"
 msgstr "systemd-escape n’a pas pu créer le nom de l’unité de montage"
 
-#: crates/netmntd/src/exec.rs:278
+#: crates/netmntd/src/exec.rs:353
 #, rust-format
 msgid "{program} {arguments} failed: {error}"
 msgstr "Échec de {program} {arguments} : {error}"

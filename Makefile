@@ -19,7 +19,7 @@ SERVICEMENU = $(DESTDIR)$(PREFIX)/share/kio/servicemenus
 LOCALEDIR   = $(DESTDIR)$(PREFIX)/share/locale
 BUILD_PREFIX_FILE = build/install-prefix
 
-LINGUAS = fr
+LINGUAS = fr uk
 PACKAGE_VERSION = $(shell sed -n 's/^version = "\([^"]*\)"/\1/p' Cargo.toml)
 RUST_I18N_SOURCES := $(shell find crates -type f -name '*.rs' -print | LC_ALL=C sort)
 

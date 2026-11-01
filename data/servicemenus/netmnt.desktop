@@ -12,18 +12,21 @@ Icon=folder-network
 [Desktop Action netmntMount]
 Name=Mount
 Name[fr]=Monter
+Name[uk]=Змонтувати
 Icon=media-mount
 Exec=netmnt mount %u
 
 [Desktop Action netmntMountAs]
 Name=Mount as…
 Name[fr]=Monter en tant que…
+Name[uk]=Змонтувати як…
 Icon=dialog-password
 Exec=netmnt mount --ask %u
 
 [Desktop Action netmntMountPersistent]
 Name=Mount (persistent)
 Name[fr]=Monter (persistant)
+Name[uk]=Змонтувати (постійно)
 Icon=pin
 # --ask so an authenticated share gets credentials (KWallet, then a prompt);
 # guest shares still work if the user leaves the prompt empty / cancels.

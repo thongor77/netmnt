@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: netmnt 0.2.0\n"
+"Project-Id-Version: netmnt 0.3.0\n"
 "Report-Msgid-Bugs-To: https://github.com/thongor77/netmnt/issues\n"
-"POT-Creation-Date: 2026-08-10 17:29-0700\n"
+"POT-Creation-Date: 2026-09-02 04:49+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -110,25 +110,25 @@ msgstr ""
 msgid "{program} failed ({status}): {error}"
 msgstr ""
 
-#: crates/netmntd/src/exec.rs:187
+#: crates/netmntd/src/exec.rs:198
 #, rust-format
 msgid "{path} is not mounted"
 msgstr ""
 
-#: crates/netmntd/src/exec.rs:194
+#: crates/netmntd/src/exec.rs:224
 #, rust-format
 msgid "umount failed ({status}): {error}"
 msgstr ""
 
-#: crates/netmntd/src/exec.rs:224
+#: crates/netmntd/src/exec.rs:253
 msgid "The client did not provide a mount point"
 msgstr ""
 
-#: crates/netmntd/src/exec.rs:257
+#: crates/netmntd/src/exec.rs:332
 msgid "systemd-escape could not create the mount unit name"
 msgstr ""
 
-#: crates/netmntd/src/exec.rs:278
+#: crates/netmntd/src/exec.rs:353
 #, rust-format
 msgid "{program} {arguments} failed: {error}"
 msgstr ""
