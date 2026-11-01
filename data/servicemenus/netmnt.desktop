@@ -4,7 +4,7 @@ Name=netmnt
 # Show only on remote/network locations browsed in Dolphin.
 MimeType=inode/directory;
 X-KDE-Protocols=smb,nfs,ftp,sftp
-Actions=netmntMount;netmntMountAs;netmntMountPersistent;
+Actions=netmntMount;netmntMountAs;netmntMountPersistent;netmntUnmount;
 X-KDE-Priority=TopLevel
 X-KDE-Submenu=netmnt
 Icon=folder-network
@@ -28,3 +28,12 @@ Icon=pin
 # --ask so an authenticated share gets credentials (KWallet, then a prompt);
 # guest shares still work if the user leaves the prompt empty / cancels.
 Exec=netmnt mount --persistent --ask %u
+
+[Desktop Action netmntUnmount]
+Name=Unmount
+Name[fr]=Démonter
+Name[uk]=Демонтувати
+Icon=media-eject
+# Always shown (ServiceMenus have no "is mounted" condition): the URL maps to
+# ~/mnt/<share>, and the daemon reports a share that is not mounted.
+Exec=netmnt unmount %u

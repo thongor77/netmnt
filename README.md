@@ -95,7 +95,7 @@ sudo make reload       # refresh systemd + D-Bus
 netmnt mount smb://nas.local/public
 #   → polkit prompts for admin authentication, then:
 ls ~/mnt/public
-netmnt unmount ~/mnt/public
+netmnt unmount ~/mnt/public       # or: netmnt unmount smb://nas.local/public
 
 # Authenticated share ("mount as"): prompts for credentials (kdialog or tty),
 # can store them in KWallet, and reuses them next time.
@@ -139,9 +139,10 @@ your regular user — it has no idea about netmnt and can't reach the polkit-aut
 daemon that owns the mount. It cannot be extended with a ServiceMenu, so netmnt
 can't hook into it.
 
-Fix: unmount from the **file view** instead — navigate to the parent folder
-(e.g. `~/mnt`), right-click the mounted share, and use **netmnt → Unmount**.
-That entry goes through the daemon and works correctly.
+Fix: unmount through netmnt instead. Either right-click the share's remote
+location (where **Mount** is) and use **netmnt → Unmount**, or navigate to the
+parent folder (e.g. `~/mnt`), right-click the mounted share, and use
+**netmnt → Unmount**. Both entries go through the daemon and work correctly.
 
 To stop hitting this by accident, right-click the shortcut in the sidebar and
 choose **Hide** — you'll still have the folder itself under `~/mnt` for regular

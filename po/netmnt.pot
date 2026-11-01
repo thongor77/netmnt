@@ -6,9 +6,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: netmnt 0.2.0\n"
+"Project-Id-Version: netmnt 0.3.0\n"
 "Report-Msgid-Bugs-To: https://github.com/thongor77/netmnt/issues\n"
-"POT-Creation-Date: 2026-08-10 17:29-0700\n"
+"POT-Creation-Date: 2026-11-01 17:02+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -65,37 +65,38 @@ msgid "Ask for credentials or reuse credentials stored in KWallet"
 msgstr ""
 
 #: crates/netmnt/src/main.rs:87
-msgid "Unmount a share by its mount point"
+msgid "Unmount a share by its mount point or URL"
 msgstr ""
 
-#: crates/netmnt/src/main.rs:89
-msgid "Absolute path of the mount point"
+#: crates/netmnt/src/main.rs:90
+msgid ""
+"Absolute path of the mount point, or the smb:// or nfs:// URL of the share"
 msgstr ""
 
-#: crates/netmnt/src/main.rs:146
+#: crates/netmnt/src/main.rs:169
 #, rust-format
 msgid "Error: {error}"
 msgstr ""
 
-#: crates/netmnt/src/main.rs:148
+#: crates/netmnt/src/main.rs:171
 msgid "netmnt — failure"
 msgstr ""
 
-#: crates/netmnt/src/main.rs:172
+#: crates/netmnt/src/main.rs:179
 msgid "HOME is not set"
 msgstr ""
 
-#: crates/netmnt/src/main.rs:220
+#: crates/netmnt/src/main.rs:242
 #, rust-format
 msgid "Note: could not save credentials to KWallet: {error}"
 msgstr ""
 
-#: crates/netmnt/src/main.rs:228
+#: crates/netmnt/src/main.rs:250
 #, rust-format
 msgid "Mounted at: {path}"
 msgstr ""
 
-#: crates/netmnt/src/main.rs:236
+#: crates/netmnt/src/main.rs:260
 #, rust-format
 msgid "Unmounted: {path}"
 msgstr ""
@@ -110,25 +111,25 @@ msgstr ""
 msgid "{program} failed ({status}): {error}"
 msgstr ""
 
-#: crates/netmntd/src/exec.rs:187
+#: crates/netmntd/src/exec.rs:198
 #, rust-format
 msgid "{path} is not mounted"
 msgstr ""
 
-#: crates/netmntd/src/exec.rs:194
+#: crates/netmntd/src/exec.rs:224
 #, rust-format
 msgid "umount failed ({status}): {error}"
 msgstr ""
 
-#: crates/netmntd/src/exec.rs:224
+#: crates/netmntd/src/exec.rs:253
 msgid "The client did not provide a mount point"
 msgstr ""
 
-#: crates/netmntd/src/exec.rs:257
+#: crates/netmntd/src/exec.rs:332
 msgid "systemd-escape could not create the mount unit name"
 msgstr ""
 
-#: crates/netmntd/src/exec.rs:278
+#: crates/netmntd/src/exec.rs:353
 #, rust-format
 msgid "{program} {arguments} failed: {error}"
 msgstr ""
