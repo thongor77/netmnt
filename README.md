@@ -122,9 +122,9 @@ Uninstall: `sudo make uninstall`.
 ## Localization
 
 English is the source language and fallback. Rust messages use GNU gettext;
-French translations live in `po/fr.po` and are installed under
-`$PREFIX/share/locale` (by default, `/usr/share/locale`). KDE ServiceMenu and
-polkit text use the localized fields native to those formats.
+French and Ukrainian translations live in `po/fr.po` and `po/uk.po` and are
+installed under `$PREFIX/share/locale` (by default, `/usr/share/locale`). KDE
+ServiceMenu and polkit text use the localized fields native to those formats.
 
 See [`docs/Localization.md`](docs/Localization.md) for the translation workflow,
 adding a language, catalog updates, and explicit locale testing.

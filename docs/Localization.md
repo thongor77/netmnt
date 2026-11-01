@@ -5,9 +5,9 @@ netmnt follows the usual Linux/KDE localization mechanisms:
 - English strings in the Rust source are gettext message identifiers and the
   canonical fallback text.
 - `po/netmnt.pot` is the gettext template. Each translation is a sibling PO
-  file named for its locale, currently `po/fr.po`.
+  file named for its locale, currently `po/fr.po` and `po/uk.po`.
 - `data/servicemenus/*.desktop` uses Freedesktop/KDE localized keys such as
-  `Name[fr]`.
+  `Name[fr]` and `Name[uk]`.
 - `data/polkit/org.netmnt.policy` uses polkit's localized `description` and
   `message` elements with `xml:lang`.
 

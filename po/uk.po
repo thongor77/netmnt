@@ -1,0 +1,145 @@
+# Ukrainian translations for netmnt package
+# Переклад українською для пакету netmnt.
+# Copyright (C) 2026 netmnt contributors
+# This file is distributed under the same license as the netmnt package.
+# netmnt contributors, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: netmnt 0.3.0\n"
+"Report-Msgid-Bugs-To: https://github.com/thongor77/netmnt/issues\n"
+"POT-Creation-Date: 2026-09-02 04:49+0300\n"
+"PO-Revision-Date: 2026-09-02 04:49+0300\n"
+"Last-Translator: netmnt contributors\n"
+"Language-Team: Ukrainian\n"
+"Language: uk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: crates/netmnt/src/creds.rs:66
+#, rust-format
+msgid "Username for {url}"
+msgstr "Ім’я користувача для {url}"
+
+#: crates/netmnt/src/creds.rs:81
+#, rust-format
+msgid "Password for {username} at {url}"
+msgstr "Пароль користувача {username} для {url}"
+
+#: crates/netmnt/src/creds.rs:95
+msgid "Remember in KWallet?"
+msgstr "Запам’ятати в KWallet?"
+
+#: crates/netmnt/src/creds.rs:141
+msgid "kwallet-query could not save the credentials"
+msgstr "kwallet-query не вдалося зберегти облікові дані"
+
+#: crates/netmnt/src/main.rs:32 crates/netmntd/src/exec.rs:53
+#, rust-format
+msgid "Unsupported URL scheme (expected smb:// or nfs://): {url}"
+msgstr "Непідтримувана схема URL (очікується smb:// або nfs://): {url}"
+
+#: crates/netmnt/src/main.rs:64
+msgid "Mount network shares from a single click"
+msgstr "Монтування мережевих ресурсів одним клацанням"
+
+#: crates/netmnt/src/main.rs:67
+msgid "Mount a share for the current session"
+msgstr "Змонтувати ресурс для поточного сеансу"
+
+#: crates/netmnt/src/main.rs:69
+msgid "Source URL, for example smb://nas.local/share"
+msgstr "URL джерела, наприклад smb://nas.local/share"
+
+#: crates/netmnt/src/main.rs:73
+msgid "Keep the mount across reboots using a systemd mount unit"
+msgstr "Зберігати монтування після перезавантаження за допомогою mount-юніта systemd"
+
+#: crates/netmnt/src/main.rs:77
+msgid "Use an explicit username and prompt for its password"
+msgstr "Використати вказане ім’я користувача й запитати пароль"
+
+#: crates/netmnt/src/main.rs:81
+msgid "Ask for credentials or reuse credentials stored in KWallet"
+msgstr "Запитати облікові дані або використати збережені в KWallet"
+
+#: crates/netmnt/src/main.rs:87
+msgid "Unmount a share by its mount point"
+msgstr "Демонтувати ресурс за його точкою монтування"
+
+#: crates/netmnt/src/main.rs:89
+msgid "Absolute path of the mount point"
+msgstr "Абсолютний шлях до точки монтування"
+
+#: crates/netmnt/src/main.rs:146
+#, rust-format
+msgid "Error: {error}"
+msgstr "Помилка: {error}"
+
+#: crates/netmnt/src/main.rs:148
+msgid "netmnt — failure"
+msgstr "netmnt — помилка"
+
+#: crates/netmnt/src/main.rs:172
+msgid "HOME is not set"
+msgstr "Змінну HOME не задано"
+
+#: crates/netmnt/src/main.rs:220
+#, rust-format
+msgid "Note: could not save credentials to KWallet: {error}"
+msgstr "Примітка: не вдалося зберегти облікові дані в KWallet: {error}"
+
+#: crates/netmnt/src/main.rs:228
+#, rust-format
+msgid "Mounted at: {path}"
+msgstr "Змонтовано в: {path}"
+
+#: crates/netmnt/src/main.rs:236
+#, rust-format
+msgid "Unmounted: {path}"
+msgstr "Демонтовано: {path}"
+
+#: crates/netmntd/src/exec.rs:73
+#, rust-format
+msgid "Could not create mount point {path}: {error}"
+msgstr "Не вдалося створити точку монтування {path}: {error}"
+
+#: crates/netmntd/src/exec.rs:111
+#, rust-format
+msgid "{program} failed ({status}): {error}"
+msgstr "Помилка {program} ({status}): {error}"
+
+#: crates/netmntd/src/exec.rs:198
+#, rust-format
+msgid "{path} is not mounted"
+msgstr "{path} не змонтовано"
+
+#: crates/netmntd/src/exec.rs:224
+#, rust-format
+msgid "umount failed ({status}): {error}"
+msgstr "Помилка umount ({status}): {error}"
+
+#: crates/netmntd/src/exec.rs:253
+msgid "The client did not provide a mount point"
+msgstr "Клієнт не вказав точку монтування"
+
+#: crates/netmntd/src/exec.rs:332
+msgid "systemd-escape could not create the mount unit name"
+msgstr "systemd-escape не вдалося створити ім’я mount-юніта"
+
+#: crates/netmntd/src/exec.rs:353
+#, rust-format
+msgid "{program} {arguments} failed: {error}"
+msgstr "Помилка {program} {arguments}: {error}"
+
+#: crates/netmntd/src/main.rs:28
+msgid "Missing caller identity"
+msgstr "Не вдалося визначити, хто викликає метод"
+
+#: crates/netmntd/src/main.rs:37
+#, rust-format
+msgid "polkit denied action {action}"
+msgstr "polkit відхилив дію {action}"
